@@ -6,7 +6,7 @@ import os
 from rectpack import newPacker, PackingBin, SORT_NONE
 
 # === 自動載入專案內的字型檔，徹底解決雲端中文變方框的問題 ===
-font_path = "NotoSansTC-Regular.ttf"
+font_path = "NotoSansTC-VariableFont_wght.ttf"
 if os.path.exists(font_path):
     fe = fm.FontEntry(fname=font_path, name='CustomFont')
     fm.fontManager.ttflist.insert(0, fe)
