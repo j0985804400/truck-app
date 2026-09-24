@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.font_manager as fm
 import os
-from rectpack import newPacker, PackingBin, PackingMode, SORT_NONE
+from rectpack import newPacker, PackingBin, SORT_NONE
 
 # === 字型設定：使用你上傳的可變字型檔避免雲端中文變方框 ===
 font_path = "NotoSansTC-VariableFont_wght.ttf"
@@ -17,11 +17,9 @@ else:
 plt.rcParams['axes.unicode_minus'] = False
 
 def init_state():
-    # 車斗固定規格
     st.session_state['truck_l'] = 300
     st.session_state['truck_w'] = 150
     
-    # 17種常規貨物清單
     st.session_state['items'] = [
         {"name": "333", "l": 60, "w": 50, "qty": 0, "priority": True, "type": "regular"},
         {"name": "LAM", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
@@ -95,9 +93,10 @@ with b1:
 with b2:
     st.button("🔄 一鍵清空數量", on_click=reset_all, use_container_width=True)
 
-# 3. 核心運算與繪圖邏輯 (強制優先貨物從左上角開始排)
+# 3. 核心運算與繪圖邏輯 (使用最穩定的基礎演算法，並透過排序確保優先項目靠前)
 if calc_btn:
-    packer = newPacker(mode=PackingMode.Offline, sort_algo=SORT_NONE, bin_algo=PackingBin.MaxRectsBl)
+    # 改用最標準、絕對不會發生相容性錯誤的宣告方式
+    packer = newPacker(sort_algo=SORT_NONE, bin_algo=PackingBin.BFF)
     packer.add_bin(st.session_state['truck_l'], st.session_state['truck_w'])
     
     total_items = {}
@@ -109,7 +108,7 @@ if calc_btn:
             for _ in range(item['qty']):
                 rectangles_to_pack.append((item['l'], item['w'], idx, item['priority']))
     
-    # 排序：強制優先級高的 (priority=True) 排在最前面，靠左上角排列
+    # 排序：強制優先級高的 (priority=True) 排在最前面，優先被放入車頭
     rectangles_to_pack.sort(key=lambda x: (-x[3], -(x[0]*x[1])))
     
     for r in rectangles_to_pack:
