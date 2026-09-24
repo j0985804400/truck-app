@@ -23,8 +23,8 @@ def init_state():
     st.session_state['items'] = [
         {"name": "333", "l": 60, "w": 50, "qty": 0, "priority": True, "type": "regular"},
         {"name": "LAM", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
-        {"name": "EX2", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "WET", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "EX2", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "ETTN", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "DPS2", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "UCU", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
@@ -32,7 +32,7 @@ def init_state():
         {"name": "APC", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "IOS大", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "IOS小", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
-        {"name": "爐管", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "爐管方型", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "辛巳大", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "辛巳小", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "SDRM", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
