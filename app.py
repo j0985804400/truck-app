@@ -9,7 +9,7 @@ plt.rcParams['axes.unicode_minus'] = False
 def init_state():
     st.session_state['truck_l'] = 300
     st.session_state['truck_w'] = 150
-    # 👇 這裡就是你的常規品項清單，未來隨時可以在這裡修改品名和尺寸
+    # 👇 已經直接幫你把 17 種常規貨物完整內建！
     st.session_state['items'] = [
         {"name": "333", "l": 60, "w": 50, "qty": 0, "priority": True, "type": "regular"},
         {"name": "LAM", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
@@ -34,7 +34,6 @@ if 'items' not in st.session_state:
     init_state()
 
 def add_temp_item():
-    # 臨時新增的貨物保留編輯能力，所以直接給予預設長寬供後續修改
     st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "priority": False, "type": "temp"})
 
 def reset_all():
@@ -57,19 +56,19 @@ with st.expander("🚚 1. 設定車斗尺寸", expanded=False):
 st.subheader("📥 2. 貨物數量設定")
 st.button("➕ 新增臨時貨物", on_click=add_temp_item, use_container_width=True)
 
-# 2. 極簡清單：常規品項直接對應數量，臨時品項則展開簡易調整
+# 2. 高密度緊湊清單 (大幅縮小上下間距)
 for i, item in enumerate(st.session_state['items']):
-    col_info, col_qty = st.columns([7, 3])
+    col_info, col_qty = st.columns([6.5, 3.5])
     
     with col_info:
         icon = "📍" if item["type"] == "regular" else "⚠️"
         pri_text = "⭐" if item["priority"] else ""
-        st.markdown(f"<div style='margin-top: 8px;'><b>{icon} {item['name']}</b> {pri_text} <span style='font-size:0.85em; color:gray;'>({item['l']}x{item['w']})</span></div>", unsafe_allow_html=True)
+        # 縮小文字邊距，讓每一行更緊密
+        st.markdown(f"<div style='margin-top: 12px;'><b>{icon} {item['name']}</b> {pri_text} <span style='font-size:0.8em; color:gray;'>({item['l']}x{item['w']})</span></div>", unsafe_allow_html=True)
     
     with col_qty:
         item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f"qty_{i}", label_visibility="collapsed")
     
-    # 【優化】常規品項完全不需要編輯框；只有「臨時新增」的貨物才需要展開修改名字和尺寸
     if item["type"] == "temp":
         with st.expander("✏️ 調整臨時貨物設定"):
             item['name'] = st.text_input("品名", value=item['name'], key=f"edit_name_{i}")
@@ -78,7 +77,8 @@ for i, item in enumerate(st.session_state['items']):
             item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f"edit_w_{i}")
             item['priority'] = st.checkbox("⭐ 優先放車頭", value=item['priority'], key=f"edit_pri_{i}")
     
-    st.divider()
+    # 【優化】把原本很粗的 divider 換成極細的淺灰色分隔線，減少視覺阻礙
+    st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
 
 # 將兩個主要按鈕並排放置
 b1, b2 = st.columns(2)
