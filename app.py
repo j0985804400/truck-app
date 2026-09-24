@@ -3,17 +3,15 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from rectpack import newPacker, PackingBin, SORT_NONE
 
-# === 解決畫圖中文顯示變成方塊的問題 ===
 plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'PingFang TC', 'SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
-# 1. 初始化系統狀態
 def init_state():
     st.session_state['truck_l'] = 300
     st.session_state['truck_w'] = 150
-    # 👇 這裡維持你的「原廠預設清單」，可以直接改成你們公司的真實貨單
     st.session_state['items'] = [
-     {"name": "333", "l": 60, "w": 50, "qty": 0, "priority": True, "type": "regular"},
+        {"name": "333", "l": 60, "w": 50, "qty": 0, "priority": True, "type": "regular"},
+        {"name": "LAM", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "EX2", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "WET", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "ETTN", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
@@ -34,7 +32,6 @@ def init_state():
 if 'items' not in st.session_state:
     init_state()
 
-# 只保留臨時貨物的按鈕邏輯
 def add_temp_item():
     st.session_state['items'].append({"name": "臨時新增貨物", "l": 50, "w": 50, "qty": 1, "priority": False, "type": "temp"})
 
@@ -46,7 +43,7 @@ def reset_all():
             new_items.append(item)
     st.session_state['items'] = new_items
 
-# 2. 介面設計
+# 1. 介面設定：改回 centered (置中)，最適合窄螢幕單手操作
 st.set_page_config(page_title="貨車裝箱計算器", layout="centered")
 st.title("📦 貨車裝箱計算器")
 
@@ -55,30 +52,43 @@ with st.expander("🚚 1. 設定車斗尺寸", expanded=False):
     st.session_state['truck_l'] = col1.number_input("車斗長度 (cm)", value=st.session_state['truck_l'], step=10)
     st.session_state['truck_w'] = col2.number_input("車斗寬度 (cm)", value=st.session_state['truck_w'], step=10)
 
-st.subheader("📥 2. 貨物清單設定")
-
-# 【修改點】把並排的按鈕拿掉，只留下滿版的「新增臨時貨物」按鈕，畫面更簡潔！
+st.subheader("📥 2. 貨物數量設定")
 st.button("➕ 新增臨時貨物", on_click=add_temp_item, use_container_width=True)
-st.markdown("---")
 
+# 2. 緊湊的單手操作清單
 for i, item in enumerate(st.session_state['items']):
-    with st.container():
-        type_label = "📍" if item["type"] == "regular" else "⚠️ (臨時)"
-        st.markdown(f"**{type_label} 貨物 {i+1}**")
-        item['name'] = st.text_input("品名", value=item['name'], key=f"name_{i}")
-        
-        c1, c2, c3 = st.columns(3)
-        item['l'] = c1.number_input("長(cm)", value=item['l'], min_value=1, step=5, key=f"l_{i}")
-        item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f"w_{i}")
-        item['qty'] = c3.number_input("數量", value=item['qty'], min_value=0, step=1, key=f"qty_{i}")
-        
-        item['priority'] = st.checkbox("⭐ 優先放車頭最裡面", value=item['priority'], key=f"pri_{i}")
-        st.divider()
+    # 使用水平排列，左邊顯示名稱與尺寸，右邊輸入數量
+    col_info, col_qty = st.columns([6, 4])
+    
+    with col_info:
+        # 用不同符號區分常規和臨時，並直接顯示尺寸，不再使用佔空間的輸入框
+        icon = "📍" if item["type"] == "regular" else "⚠️"
+        pri_text = "⭐" if item["priority"] else ""
+        st.markdown(f"**{icon} {item['name']}** {pri_text}  \n*(尺寸: {item['l']}x{item['w']} cm)*")
+    
+    with col_qty:
+        # 只保留數量的輸入框，放在右邊方便大拇指按
+        item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f"qty_{i}", label_visibility="collapsed")
+    
+    # 【細節編輯區】如果臨時要改名字或尺寸，或是修改臨時貨物，才點開這個 expander
+    with st.expander("✏️ 編輯詳細資訊"):
+        item['name'] = st.text_input("品名", value=item['name'], key=f"edit_name_{i}")
+        c1, c2 = st.columns(2)
+        item['l'] = c1.number_input("長(cm)", value=item['l'], min_value=1, step=5, key=f"edit_l_{i}")
+        item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f"edit_w_{i}")
+        item['priority'] = st.checkbox("⭐ 優先放車頭", value=item['priority'], key=f"edit_pri_{i}")
+    
+    st.divider() # 加上分隔線讓畫面乾淨
 
-st.button("🔄 一鍵清空重置", on_click=reset_all, type="primary", use_container_width=True)
+# 將兩個主要按鈕並排放置
+b1, b2 = st.columns(2)
+with b1:
+    calc_btn = st.button("▶️ 開始計算排版", type="primary", use_container_width=True)
+with b2:
+    st.button("🔄 一鍵清空數量", on_click=reset_all, use_container_width=True)
 
-# 3. 核心運算與繪圖邏輯
-if st.button("▶️ 開始計算排版", type="primary", use_container_width=True):
+# 3. 核心運算與繪圖邏輯 (與之前相同)
+if calc_btn:
     packer = newPacker(sort_algo=SORT_NONE, bin_algo=PackingBin.BFF)
     packer.add_bin(st.session_state['truck_l'], st.session_state['truck_w'])
     
@@ -98,7 +108,6 @@ if st.button("▶️ 開始計算排版", type="primary", use_container_width=Tr
         
     packer.pack()
     
-    # 4. 統計與顯示結果
     if len(packer) > 0:
         bin_data = packer[0]
         fig, ax = plt.subplots(figsize=(8, 4))
