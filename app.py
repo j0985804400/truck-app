@@ -3,26 +3,38 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from rectpack import newPacker, PackingBin, SORT_NONE
 
-# === 新增：解決畫圖中文顯示變成方塊的問題 ===
-plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'PingFang TC', 'SimHei'] # 設定字體為微軟正黑體
+# === 解決畫圖中文顯示變成方塊的問題 ===
+plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'PingFang TC', 'SimHei']
 plt.rcParams['axes.unicode_minus'] = False
-# =========================================
 
 # 1. 初始化系統狀態
 def init_state():
     st.session_state['truck_l'] = 300
     st.session_state['truck_w'] = 150
+    # 👇 這裡維持你的「原廠預設清單」，可以直接改成你們公司的真實貨單
     st.session_state['items'] = [
-        {"name": "常規紙箱A", "l": 60, "w": 50, "qty": 0, "priority": True, "type": "regular"},
-        {"name": "常規紙箱B", "l": 80, "w": 50, "qty": 0, "priority": False, "type": "regular"}
+     {"name": "333", "l": 60, "w": 50, "qty": 0, "priority": True, "type": "regular"},
+        {"name": "EX2", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "WET", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "ETTN", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "DPS2", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "UCU", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "ICP", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "APC", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "IOS大", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "IOS小", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "爐管", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "辛巳大", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "辛巳小", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "SDRM", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "CUP", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "CUP SOD", "l": 80, "w": 50, "qty": 0, "priority": False, "type": "regular"}
     ]
 
 if 'items' not in st.session_state:
     init_state()
 
-def add_regular_item():
-    st.session_state['items'].append({"name": "新常規貨物", "l": 50, "w": 50, "qty": 0, "priority": False, "type": "regular"})
-
+# 只保留臨時貨物的按鈕邏輯
 def add_temp_item():
     st.session_state['items'].append({"name": "臨時新增貨物", "l": 50, "w": 50, "qty": 1, "priority": False, "type": "temp"})
 
@@ -45,9 +57,8 @@ with st.expander("🚚 1. 設定車斗尺寸", expanded=False):
 
 st.subheader("📥 2. 貨物清單設定")
 
-col_add_reg, col_add_temp = st.columns(2)
-col_add_reg.button("➕ 新增常規尺寸", on_click=add_regular_item, use_container_width=True)
-col_add_temp.button("➕ 新增臨時貨物", on_click=add_temp_item, use_container_width=True)
+# 【修改點】把並排的按鈕拿掉，只留下滿版的「新增臨時貨物」按鈕，畫面更簡潔！
+st.button("➕ 新增臨時貨物", on_click=add_temp_item, use_container_width=True)
 st.markdown("---")
 
 for i, item in enumerate(st.session_state['items']):
