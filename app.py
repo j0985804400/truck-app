@@ -10,7 +10,7 @@ def init_state():
     st.session_state['truck_l'] = 300
     st.session_state['truck_w'] = 150
     st.session_state['items'] = [
-        {"name": "333", "l": 60, "w": 50, "qty": 0, "priority": True, "type": "regular"},
+       {"name": "333", "l": 60, "w": 50, "qty": 0, "priority": True, "type": "regular"},
         {"name": "LAM", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "EX2", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "WET", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
@@ -33,7 +33,7 @@ if 'items' not in st.session_state:
     init_state()
 
 def add_temp_item():
-    st.session_state['items'].append({"name": "臨時新增貨物", "l": 50, "w": 50, "qty": 1, "priority": False, "type": "temp"})
+    st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "priority": False, "type": "temp"})
 
 def reset_all():
     new_items = []
@@ -43,7 +43,7 @@ def reset_all():
             new_items.append(item)
     st.session_state['items'] = new_items
 
-# 1. 介面設定：改回 centered (置中)，最適合窄螢幕單手操作
+# 1. 介面設定
 st.set_page_config(page_title="貨車裝箱計算器", layout="centered")
 st.title("📦 貨車裝箱計算器")
 
@@ -55,22 +55,20 @@ with st.expander("🚚 1. 設定車斗尺寸", expanded=False):
 st.subheader("📥 2. 貨物數量設定")
 st.button("➕ 新增臨時貨物", on_click=add_temp_item, use_container_width=True)
 
-# 2. 緊湊的單手操作清單
+# 2. 緊湊的單手操作清單 (終極單行版)
 for i, item in enumerate(st.session_state['items']):
-    # 使用水平排列，左邊顯示名稱與尺寸，右邊輸入數量
-    col_info, col_qty = st.columns([6, 4])
+    # 【修改點1】稍微調整比例，給左邊多一點點空間 (7:3)
+    col_info, col_qty = st.columns([7, 3])
     
     with col_info:
-        # 用不同符號區分常規和臨時，並直接顯示尺寸，不再使用佔空間的輸入框
         icon = "📍" if item["type"] == "regular" else "⚠️"
         pri_text = "⭐" if item["priority"] else ""
-        st.markdown(f"**{icon} {item['name']}** {pri_text}  \n*(尺寸: {item['l']}x{item['w']} cm)*")
+        # 【修改點2】拿掉換行，並把 cm 縮寫拿掉節省空間，全部排在同一行！
+        st.markdown(f"<div style='margin-top: 8px;'><b>{icon} {item['name']}</b> {pri_text} <span style='font-size:0.85em; color:gray;'>({item['l']}x{item['w']})</span></div>", unsafe_allow_html=True)
     
     with col_qty:
-        # 只保留數量的輸入框，放在右邊方便大拇指按
         item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f"qty_{i}", label_visibility="collapsed")
     
-    # 【細節編輯區】如果臨時要改名字或尺寸，或是修改臨時貨物，才點開這個 expander
     with st.expander("✏️ 編輯詳細資訊"):
         item['name'] = st.text_input("品名", value=item['name'], key=f"edit_name_{i}")
         c1, c2 = st.columns(2)
@@ -78,7 +76,7 @@ for i, item in enumerate(st.session_state['items']):
         item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f"edit_w_{i}")
         item['priority'] = st.checkbox("⭐ 優先放車頭", value=item['priority'], key=f"edit_pri_{i}")
     
-    st.divider() # 加上分隔線讓畫面乾淨
+    st.divider()
 
 # 將兩個主要按鈕並排放置
 b1, b2 = st.columns(2)
@@ -87,7 +85,7 @@ with b1:
 with b2:
     st.button("🔄 一鍵清空數量", on_click=reset_all, use_container_width=True)
 
-# 3. 核心運算與繪圖邏輯 (與之前相同)
+# 3. 核心運算與繪圖邏輯 (維持不變)
 if calc_btn:
     packer = newPacker(sort_algo=SORT_NONE, bin_algo=PackingBin.BFF)
     packer.add_bin(st.session_state['truck_l'], st.session_state['truck_w'])
