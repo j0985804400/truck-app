@@ -17,14 +17,14 @@ else:
 plt.rcParams['axes.unicode_minus'] = False
 
 def init_state():
-    st.session_state['truck_l'] = 300
-    st.session_state['truck_w'] = 150
+    st.session_state['truck_l'] = 820
+    st.session_state['truck_w'] = 240
     
     st.session_state['items'] = [
-        {"name": "333", "l": 60, "w": 50, "qty": 0, "priority": True, "type": "regular"},
+        {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": True, "type": "regular"},
         {"name": "LAM", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
-        {"name": "EX2", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
-        {"name": "WET", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "EX2", "l": 60, "w": 67, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "WET", "l": 62, "w": 78, "qty": 0, "priority": False, "type": "regular"},
         {"name": "ETTN", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "DPS2", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "UCU", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
@@ -36,7 +36,7 @@ def init_state():
         {"name": "辛巳大", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "辛巳小", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "SDRM", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
-        {"name": "CUP", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "CUP", "l": 90, "w": 56, "qty": 0, "priority": False, "type": "regular"},
         {"name": "CUP SOD", "l": 80, "w": 50, "qty": 0, "priority": False, "type": "regular"}
     ]
 
