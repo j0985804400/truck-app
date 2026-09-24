@@ -7,8 +7,10 @@ plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'PingFang TC', 'SimHei'
 plt.rcParams['axes.unicode_minus'] = False
 
 def init_state():
+    # 👇 這裡直接內設好你們的車斗長寬！如果換車型，直接在這裡改數字即可
     st.session_state['truck_l'] = 300
     st.session_state['truck_w'] = 150
+    
     st.session_state['items'] = [
         {"name": "333", "l": 60, "w": 50, "qty": 0, "priority": True, "type": "regular"},
         {"name": "LAM", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
@@ -47,14 +49,12 @@ def reset_all():
 st.set_page_config(page_title="貨車裝箱計算器", layout="centered")
 st.title("📦 貨車裝箱計算器")
 
-with st.expander("🚚 1. 設定車斗尺寸", expanded=False):
-    col1, col2 = st.columns(2)
-    st.session_state['truck_l'] = col1.number_input("車斗長度 (cm)", value=st.session_state['truck_l'], step=10)
-    st.session_state['truck_w'] = col2.number_input("車斗寬度 (cm)", value=st.session_state['truck_w'], step=10)
+# 【優化】拿掉佔空間的車斗展開選單，改用簡短的一行字顯示目前內設車型規格
+st.markdown(f"<p style='color: gray; margin-bottom: 20px;'>🚚 目前車斗規格：長 {st.session_state['truck_l']} cm × 寬 {st.session_state['truck_w']} cm</p>", unsafe_allow_html=True)
 
-st.subheader("📥 2. 貨物數量設定")
+st.subheader("📥 貨物數量設定")
 
-# 2. 先顯示所有貨物清單
+# 2. 顯示所有貨物清單
 for i, item in enumerate(st.session_state['items']):
     col_info, col_qty = st.columns([6.5, 3.5])
     
@@ -76,7 +76,7 @@ for i, item in enumerate(st.session_state['items']):
             
     st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
 
-# 【調整】把「新增臨時貨物」按鈕移到清單的最下方
+# 新增臨時貨物按鈕
 st.button("➕ 新增臨時貨物", on_click=add_temp_item, use_container_width=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
