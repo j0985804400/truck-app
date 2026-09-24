@@ -3,28 +3,30 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.font_manager as fm
 import os
-from rectpack import newPacker, PackingBin, SORT_NONE
+from rectpack import newPacker, PackingBin, PackingMode, SORT_NONE
 
-# === 自動載入專案內的字型檔，徹底解決雲端中文變方框的問題 ===
+# === 字型設定：使用你上傳的可變字型檔避免雲端中文變方框 ===
 font_path = "NotoSansTC-VariableFont_wght.ttf"
 if os.path.exists(font_path):
     fe = fm.FontEntry(fname=font_path, name='CustomFont')
     fm.fontManager.ttflist.insert(0, fe)
     plt.rcParams['font.family'] = ['CustomFont']
 else:
-    # 備用方案 (如果找不到字型檔時的防呆)
     plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'PingFang TC', 'SimHei']
 
 plt.rcParams['axes.unicode_minus'] = False
 
 def init_state():
+    # 車斗固定規格
     st.session_state['truck_l'] = 300
     st.session_state['truck_w'] = 150
+    
+    # 17種常規貨物清單
     st.session_state['items'] = [
         {"name": "333", "l": 60, "w": 50, "qty": 0, "priority": True, "type": "regular"},
         {"name": "LAM", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
-        {"name": "WET", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "EX2", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "WET", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "ETTN", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "DPS2", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "UCU", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
@@ -32,7 +34,7 @@ def init_state():
         {"name": "APC", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "IOS大", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "IOS小", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
-        {"name": "爐管方型", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "爐管", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "辛巳大", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "辛巳小", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
         {"name": "SDRM", "l": 60, "w": 50, "qty": 0, "priority": False, "type": "regular"},
@@ -93,10 +95,8 @@ with b1:
 with b2:
     st.button("🔄 一鍵清空數量", on_click=reset_all, use_container_width=True)
 
-# 3. 核心運算與繪圖邏輯
-if caif calc_btn:
-    from rectpack import PackingMode
-    # 改用 MaxRectsBl 演算法，讓箱子更緊密貼齊左上角車頭
+# 3. 核心運算與繪圖邏輯 (強制優先貨物從左上角開始排)
+if calc_btn:
     packer = newPacker(mode=PackingMode.Offline, sort_algo=SORT_NONE, bin_algo=PackingBin.MaxRectsBl)
     packer.add_bin(st.session_state['truck_l'], st.session_state['truck_w'])
     
@@ -107,10 +107,9 @@ if caif calc_btn:
         if item['qty'] > 0:
             total_items[idx] = {'name': item['name'], 'req': item['qty'], 'packed': 0}
             for _ in range(item['qty']):
-                # 記錄格式：(長, 寬, 索引, 是否優先)
                 rectangles_to_pack.append((item['l'], item['w'], idx, item['priority']))
     
-    # 【關鍵】強制把優先級高的 (priority=True) 排序排在最前面
+    # 排序：強制優先級高的 (priority=True) 排在最前面，靠左上角排列
     rectangles_to_pack.sort(key=lambda x: (-x[3], -(x[0]*x[1])))
     
     for r in rectangles_to_pack:
@@ -154,4 +153,3 @@ if caif calc_btn:
                     st.write(f"- {v['name']}：剩 {v['req'] - v['packed']} 件未裝入")
     else:
         st.warning("沒有貨物被裝載，請檢查尺寸或數量是否正確。")
-
