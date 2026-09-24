@@ -94,8 +94,10 @@ with b2:
     st.button("🔄 一鍵清空數量", on_click=reset_all, use_container_width=True)
 
 # 3. 核心運算與繪圖邏輯
-if calc_btn:
-    packer = newPacker(sort_algo=SORT_NONE, bin_algo=PackingBin.BFF)
+if caif calc_btn:
+    from rectpack import PackingMode
+    # 改用 MaxRectsBl 演算法，讓箱子更緊密貼齊左上角車頭
+    packer = newPacker(mode=PackingMode.Offline, sort_algo=SORT_NONE, bin_algo=PackingBin.MaxRectsBl)
     packer.add_bin(st.session_state['truck_l'], st.session_state['truck_w'])
     
     total_items = {}
@@ -105,9 +107,11 @@ if calc_btn:
         if item['qty'] > 0:
             total_items[idx] = {'name': item['name'], 'req': item['qty'], 'packed': 0}
             for _ in range(item['qty']):
+                # 記錄格式：(長, 寬, 索引, 是否優先)
                 rectangles_to_pack.append((item['l'], item['w'], idx, item['priority']))
     
-    rectangles_to_pack.sort(key=lambda x: (not x[3], -(x[0]*x[1])))
+    # 【關鍵】強制把優先級高的 (priority=True) 排序排在最前面
+    rectangles_to_pack.sort(key=lambda x: (-x[3], -(x[0]*x[1])))
     
     for r in rectangles_to_pack:
         packer.add_rect(r[0], r[1], r[2])
@@ -150,3 +154,4 @@ if calc_btn:
                     st.write(f"- {v['name']}：剩 {v['req'] - v['packed']} 件未裝入")
     else:
         st.warning("沒有貨物被裝載，請檢查尺寸或數量是否正確。")
+
