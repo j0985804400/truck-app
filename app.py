@@ -3,7 +3,7 @@ import os
 
 def init_state():
     st.session_state['truck_l'] = 820
-    st.session_state['truck_w'] = 243
+    st.session_state['truck_w'] = 240
     
     if 'reset_count' not in st.session_state:
         st.session_state['reset_count'] = 0
@@ -15,7 +15,7 @@ def init_state():
         {"name": "📦 快速小箱 (約同 EX2/WET)", "l": 65, "w": 60, "qty": 0, "priority": False, "required": False, "type": "quick"},
         
         # === 更新後的正規貨物清單 ===
-        {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": True, "required": False, "type": "regular"},
+        {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": False, "required": False, "type": "regular"},
         {"name": "LAM", "l": 75, "w": 116, "qty": 0, "priority": False, "required": False, "type": "regular"},
         {"name": "EX2", "l": 60, "w": 67, "qty": 0, "priority": False, "required": False, "type": "regular"},
         {"name": "EP2", "l": 119, "w": 67, "qty": 0, "priority": False, "required": False, "type": "regular"},
