@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.font_manager as fm
 import os
-# 【換回最暴力的左下角重力引擎 MaxRectsBl】
-from rectpack import newPacker, PackingBin, SORT_NONE, MaxRectsBl
+# 【換上最聰明的填縫引擎 MaxRectsBaf (Best Area Fit)】
+from rectpack import newPacker, PackingBin, SORT_NONE, MaxRectsBaf
 
 # === 字型設定 ===
 font_path = "NotoSansTC-VariableFont_wght.ttf"
@@ -48,14 +48,12 @@ if 'items' not in st.session_state:
 def add_temp_item():
     st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "priority": False, "type": "temp"})
 
-# 【完美修復：一鍵清空邏輯】強制刪除網頁暫存元件記憶體，確保完全歸零
+# 【完美修復】強制清除 UI 暫存記憶體，保證按鈕一鍵歸零
 def reset_all():
-    # 1. 清除 UI 輸入框的記憶體綁定
     for key in list(st.session_state.keys()):
         if str(key).startswith('qty_') or str(key).startswith('edit_'):
             del st.session_state[key]
             
-    # 2. 清除資料庫裡的數量
     for item in st.session_state['items']:
         if item['type'] == 'regular':
             item['qty'] = 0
@@ -93,7 +91,6 @@ for i, item in enumerate(st.session_state['items']):
         st.markdown(f"<div style='margin-top: 12px;'><b>{icon} {item['name']}</b> {pri_text} <span style='font-size:0.8em; color:gray;'>({item['l']}x{item['w']})</span></div>", unsafe_allow_html=True)
     
     with col_qty:
-        # 當清除按鈕觸發 del st.session_state[key] 後，這裡會重新抓取 value=item['qty']，也就是 0
         item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f"qty_{i}", label_visibility="collapsed")
     
     if item["type"] == "temp":
@@ -117,8 +114,8 @@ with b2:
 
 # 3. 核心運算
 if calc_btn:
-    # 解開旋轉封印 (rotation=True) + 強制使用死命靠左下的 MaxRectsBl
-    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=MaxRectsBl)
+    # 允許旋轉，使用 MaxRectsBaf (Best Area Fit) 尋找最完美的角落
+    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=MaxRectsBaf)
     packer.add_bin(st.session_state['truck_l'], st.session_state['truck_w']) 
     
     total_items = {}
@@ -128,7 +125,6 @@ if calc_btn:
         if item['qty'] > 0:
             total_items[idx] = {'name': item['name'], 'req': item['qty'], 'packed': 0}
             for _ in range(item['qty']):
-                # 直接餵給系統長寬，讓系統自己像玩俄羅斯方塊一樣轉動尋找最佳解
                 rectangles_to_pack.append({
                     'l': item['l'], 
                     'w': item['w'], 
@@ -137,11 +133,7 @@ if calc_btn:
                     'name': item['name']
                 })
     
-    # 【完美理貨排序法】：
-    # 1. 優先級 (打勾放車頭)
-    # 2. 面積越大越先放 (大箱先堆疊)
-    # 3. 長邊越長越先放 (建立牆壁)
-    # 4. 同品名連續放 (幫助系統把一樣的箱子排在一起)
+    # 優先級別 > 面積最大 > 邊長最長 > 品名群聚
     rectangles_to_pack.sort(key=lambda x: (-x['pri'], -(x['l']*x['w']), -max(x['l'], x['w']), x['name']))
     
     for r in rectangles_to_pack:
@@ -170,7 +162,7 @@ if calc_btn:
             ax.text(x + w/2, y + h/2, f"{total_items[rid]['name']}\n{w}x{h}", 
                     ha='center', va='center', color='white', fontsize=8, fontweight='bold')
             
-        ax.set_title("裝載俯視圖 (強迫無縫填滿 + 小箱補洞)")
+        ax.set_title("裝載俯視圖 (智慧面積匹配，無縫隙補洞)")
         ax.set_xlabel("車斗長度 (cm)")
         ax.set_ylabel("車斗寬度 (cm)")
         st.pyplot(fig)
