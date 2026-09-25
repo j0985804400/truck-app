@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.font_manager as fm
 import os
-from rectpack import newPacker, PackingBin, PackingMode, SORT_NONE, MaxRectsBl
+from rectpack import newPacker, PackingBin, PackingMode, SORT_NONE, MaxRectsBssf
 
 # === 字型設定 ===
 font_path = "NotoSansTC-VariableFont_wght.ttf"
@@ -17,9 +17,11 @@ else:
 plt.rcParams['axes.unicode_minus'] = False
 
 def init_state():
+    # 更新為最新車斗尺寸
     st.session_state['truck_l'] = 820
     st.session_state['truck_w'] = 243
     
+    # 更新為最新貨物尺寸 (包含 UCU 更新)
     st.session_state['items'] = [
         {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": True, "type": "regular"},
         {"name": "LAM", "l": 1, "w": 1, "qty": 0, "priority": False, "type": "regular"},
@@ -61,7 +63,7 @@ st.title("📦 貨車裝箱計算器")
 
 st.markdown(f"<p style='color: gray; margin-bottom: 5px;'>🚚 目前車斗規格：長 {st.session_state['truck_l']} cm × 寬 {st.session_state['truck_w']} cm</p>", unsafe_allow_html=True)
 
-# === 新增功能：即時面積初估 ===
+# === 即時面積初估 ===
 truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
 total_item_area = sum(item['l'] * item['w'] * item['qty'] for item in st.session_state['items'])
 usage_pct = (total_item_area / truck_area) * 100 if truck_area > 0 else 0
@@ -73,7 +75,6 @@ elif usage_pct > 85:
 elif usage_pct > 0:
     st.info(f"🟢 **面積初估安全**：目前佔用 {usage_pct:.1f}%")
 
-# 顯示視覺化進度條 (最多顯示到 1.0 即 100%)
 if usage_pct > 0:
     st.progress(min(usage_pct / 100, 1.0))
 
@@ -110,9 +111,11 @@ with b1:
 with b2:
     st.button("🔄 一鍵清空數量", on_click=reset_all, use_container_width=True)
 
-# 3. 核心運算 (維持你的神級引力靠左排版)
+# 3. 核心運算
 if calc_btn:
-    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=MaxRectsBl)
+    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=MaxRectsBssf)
+    
+    # 騙演算法向左邊車頭吸滿
     packer.add_bin(st.session_state['truck_w'], st.session_state['truck_l'])
     
     total_items = {}
@@ -124,7 +127,8 @@ if calc_btn:
             for _ in range(item['qty']):
                 rectangles_to_pack.append((item['l'], item['w'], idx, item['priority']))
     
-    rectangles_to_pack.sort(key=lambda x: (-x[3], -(x[0]*x[1])))
+    # 排序：優先級高的排最前面，並且較長邊優先
+    rectangles_to_pack.sort(key=lambda x: (-x[3], -max(x[0], x[1]), -(x[0]*x[1])))
     
     for r in rectangles_to_pack:
         packer.add_rect(r[0], r[1], r[2])
@@ -143,6 +147,7 @@ if calc_btn:
         colors = ['#e15759', '#4e79a7', '#f28e2b', '#76b7b2', '#59a14f', '#edc949']
         
         for rect in bin_data:
+            # 把 X 和 Y 軸對調回來顯示
             x, y, w, h, rid = rect.y, rect.x, rect.height, rect.width, rect.rid
             
             total_items[rid]['packed'] += 1
@@ -152,7 +157,7 @@ if calc_btn:
             ax.text(x + w/2, y + h/2, f"{total_items[rid]['name']}\n{w}x{h}", 
                     ha='center', va='center', color='white', fontsize=8, fontweight='bold')
             
-        ax.set_title("裝載俯視圖 (左側為車頭，已強迫塞滿前排)")
+        ax.set_title("裝載俯視圖 (左側為車頭，啟用完美對齊引擎)")
         ax.set_xlabel("車斗長度 (cm)")
         ax.set_ylabel("車斗寬度 (cm)")
         st.pyplot(fig)
