@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.font_manager as fm
 import os
-# 【修正點 1】正確匯入 MaxRectsBl 演算法
 from rectpack import newPacker, PackingBin, PackingMode, SORT_NONE, MaxRectsBl
 
 # === 字型設定 ===
@@ -96,9 +95,10 @@ with b2:
 
 # 3. 核心運算
 if calc_btn:
-    # 【修正點 2】正確把 MaxRectsBl 丟給 pack_algo 參數，這樣程式就不會報錯了！
     packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=MaxRectsBl)
-    packer.add_bin(st.session_state['truck_l'], st.session_state['truck_w'])
+    
+    # 【神級修改 1】把車寬當成車長餵給演算法，騙演算法向左邊吸滿
+    packer.add_bin(st.session_state['truck_w'], st.session_state['truck_l'])
     
     total_items = {}
     rectangles_to_pack = []
@@ -109,7 +109,7 @@ if calc_btn:
             for _ in range(item['qty']):
                 rectangles_to_pack.append((item['l'], item['w'], idx, item['priority']))
     
-    # 排序：優先級高的排最前面 (-x[3])，面積大的排前面 (-(x[0]*x[1]))
+    # 排序：優先級高的絕對排前面
     rectangles_to_pack.sort(key=lambda x: (-x[3], -(x[0]*x[1])))
     
     for r in rectangles_to_pack:
@@ -122,24 +122,25 @@ if calc_btn:
         fig, ax = plt.subplots(figsize=(12, 4)) 
         ax.set_xlim(0, st.session_state['truck_l'])
         ax.set_ylim(0, st.session_state['truck_w'])
-        
-        # 鎖定 X 軸與 Y 軸比例為 1:1，確保正方形就是正方形
-        ax.set_aspect('equal')
+        ax.set_aspect('equal') # 鎖定 1:1，確保不會變形
         
         ax.add_patch(patches.Rectangle((0, 0), st.session_state['truck_l'], st.session_state['truck_w'], fill=False, lw=3))
         
         colors = ['#e15759', '#4e79a7', '#f28e2b', '#76b7b2', '#59a14f', '#edc949']
         
         for rect in bin_data:
-            x, y, w, h, rid = rect.x, rect.y, rect.width, rect.height, rect.rid
+            # 【神級修改 2】畫圖的時候，把 X 和 Y 軸對調回來！
+            x, y, w, h, rid = rect.y, rect.x, rect.height, rect.width, rect.rid
+            
             total_items[rid]['packed'] += 1
             color = colors[rid % len(colors)]
             
             ax.add_patch(patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='white', facecolor=color))
+            # 顯示旋轉後的實際長寬尺寸
             ax.text(x + w/2, y + h/2, f"{total_items[rid]['name']}\n{w}x{h}", 
                     ha='center', va='center', color='white', fontsize=8, fontweight='bold')
             
-        ax.set_title("裝載俯視圖 (左側為車頭)")
+        ax.set_title("裝載俯視圖 (左側為車頭，已強迫塞滿前排)")
         ax.set_xlabel("車斗長度 (cm)")
         ax.set_ylabel("車斗寬度 (cm)")
         st.pyplot(fig)
