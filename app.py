@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.font_manager as fm
 import os
-from rectpack import newPacker, PackingBin, SORT_NONE
+from rectpack import newPacker, PackingBin, PackingMode, SORT_NONE
 
 # === 字型設定 ===
 font_path = "NotoSansTC-VariableFont_wght.ttf"
@@ -17,11 +17,9 @@ else:
 plt.rcParams['axes.unicode_minus'] = False
 
 def init_state():
-    # 依照你的最新數據更新大車斗尺寸
     st.session_state['truck_l'] = 820
     st.session_state['truck_w'] = 240
     
-    # 依照你的最新數據更新貨物清單
     st.session_state['items'] = [
         {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": True, "type": "regular"},
         {"name": "LAM", "l": 1, "w": 1, "qty": 0, "priority": False, "type": "regular"},
@@ -95,9 +93,9 @@ with b1:
 with b2:
     st.button("🔄 一鍵清空數量", on_click=reset_all, use_container_width=True)
 
-# 3. 核心運算：包含 rotation=True 允許旋轉，並強制優先貨物靠左
+# 3. 核心運算：允許旋轉，並改用 MaxRectsBl (靠左下角緊密排列)
 if calc_btn:
-    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF)
+    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.MaxRectsBl)
     packer.add_bin(st.session_state['truck_l'], st.session_state['truck_w'])
     
     total_items = {}
@@ -109,7 +107,7 @@ if calc_btn:
             for _ in range(item['qty']):
                 rectangles_to_pack.append((item['l'], item['w'], idx, item['priority']))
     
-    # 排序：優先級高的排最前面 (-x[3])
+    # 排序：優先級高的排最前面 (-x[3])，面積大的排前面 (-(x[0]*x[1]))
     rectangles_to_pack.sort(key=lambda x: (-x[3], -(x[0]*x[1])))
     
     for r in rectangles_to_pack:
@@ -119,9 +117,14 @@ if calc_btn:
     
     if len(packer) > 0:
         bin_data = packer[0]
-        fig, ax = plt.subplots(figsize=(10, 4)) # 稍微加寬圖表比例以符合大車斗
+        # 【修改】因為車斗變長(820)，把圖表的寬度稍微拉長一點
+        fig, ax = plt.subplots(figsize=(12, 4))
         ax.set_xlim(0, st.session_state['truck_l'])
         ax.set_ylim(0, st.session_state['truck_w'])
+        
+        # 【關鍵修復】鎖定 X 軸與 Y 軸比例為 1:1，確保尺寸絕對不變形！
+        ax.set_aspect('equal')
+        
         ax.add_patch(patches.Rectangle((0, 0), st.session_state['truck_l'], st.session_state['truck_w'], fill=False, lw=3))
         
         colors = ['#e15759', '#4e79a7', '#f28e2b', '#76b7b2', '#59a14f', '#edc949']
@@ -132,7 +135,6 @@ if calc_btn:
             color = colors[rid % len(colors)]
             
             ax.add_patch(patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='white', facecolor=color))
-            # 顯示旋轉後的實際長寬尺寸
             ax.text(x + w/2, y + h/2, f"{total_items[rid]['name']}\n{w}x{h}", 
                     ha='center', va='center', color='white', fontsize=8, fontweight='bold')
             
