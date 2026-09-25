@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.font_manager as fm
 import os
+from rectpack import newPacker, PackingBin, PackingMode, SORT_NONE, MaxRectsBl
 
 # === 字型設定 ===
 font_path = "NotoSansTC-VariableFont_wght.ttf"
@@ -108,22 +109,25 @@ with b1:
 with b2:
     st.button("🔄 一鍵清空數量", on_click=reset_all, use_container_width=True)
 
-# 3. 核心運算：完全自製的「人類築牆式排版 (Shelf Packing)」
+# 3. 核心運算：方向鎖定 + 強制車頭重力引擎
 if calc_btn:
-    truck_w = st.session_state['truck_w']
-    truck_l = st.session_state['truck_l']
+    # 使用 Bottom-Left (BL) 引擎，這會像黑洞一樣把箱子拼命往車頭跟邊緣吸
+    packer = newPacker(rotation=False, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=MaxRectsBl)
+    
+    # 騙演算法把車寬當成 X 軸、車長當成 Y 軸，這樣 Bottom-Left 就會瘋狂往車頭 (Y=0) 擠
+    packer.add_bin(st.session_state['truck_w'], st.session_state['truck_l'])
     
     total_items = {}
-    boxes_to_pack = []
+    rectangles_to_pack = []
     
-    # 計算最佳方向並準備箱子
     for idx, item in enumerate(st.session_state['items']):
         if item['qty'] > 0:
             total_items[idx] = {'name': item['name'], 'req': item['qty'], 'packed': 0}
-            w1, w2 = item['l'], item['w']
             
-            fit_1, waste_1 = truck_w // w1, truck_w % w1
-            fit_2, waste_2 = truck_w // w2, truck_w % w2
+            # === 保留人類智慧：算出最能完美塞滿車寬(243)的方向 ===
+            w1, w2 = item['l'], item['w']
+            fit_1, waste_1 = st.session_state['truck_w'] // w1, st.session_state['truck_w'] % w1
+            fit_2, waste_2 = st.session_state['truck_w'] // w2, st.session_state['truck_w'] % w2
             
             if fit_1 == 0 and fit_2 == 0: best_w, best_l = w1, w2
             elif fit_1 == 0: best_w, best_l = w2, w1
@@ -133,55 +137,18 @@ if calc_btn:
             else: best_w, best_l = (w1, w2) if w2 < w1 else (w2, w1)
                 
             for _ in range(item['qty']):
-                boxes_to_pack.append({
-                    'w': best_w, 
-                    'l': best_l, 
-                    'rid': idx, 
-                    'pri': item['priority'],
-                    'name': item['name']
-                })
+                rectangles_to_pack.append((best_w, best_l, idx, item['priority']))
     
-    # 【關鍵排序】優先級別 > 箱子深度(長度) > 寬度。這保證了長度一樣的箱子絕對會被排在同一列！
-    boxes_to_pack.sort(key=lambda x: (-x['pri'], -x['l'], -x['w']))
+    # 排序：優先級高的放最前面 > 車深(長)較長的先放 > 寬度較寬的先放
+    rectangles_to_pack.sort(key=lambda x: (-x[3], -x[1], -x[0]))
     
-    bin_data = []
-    current_x = 0  # 記錄當前排在車深的位置
-    current_y = 0  # 記錄當前排已使用的寬度
-    current_max_l = 0 # 記錄當前排最深(長)的尺寸
-    
-    for box in boxes_to_pack:
-        placed = False
+    for r in rectangles_to_pack:
+        packer.add_rect(r[0], r[1], r[2])
         
-        # 1. 嘗試將箱子加入目前的排
-        # 條件：車寬還有空間 + (如果是新排則沒限制，否則箱子長度不能超過這排的基準深度)
-        can_fit_width = (current_y + box['w'] <= truck_w)
-        can_fit_length = (current_max_l == 0 or box['l'] <= current_max_l)
-        
-        if can_fit_width and can_fit_length:
-            if current_max_l == 0:
-                current_max_l = box['l']
-            
-            if current_x + current_max_l <= truck_l:
-                bin_data.append({'x': current_x, 'y': current_y, 'l': box['l'], 'w': box['w'], 'rid': box['rid']})
-                current_y += box['w']
-                total_items[box['rid']]['packed'] += 1
-                placed = True
-                
-        # 2. 目前的排滿了，或是箱子太長會突出去，直接在後面開新的一排
-        if not placed:
-            if current_max_l > 0:
-                current_x += current_max_l
-                
-            current_y = 0
-            current_max_l = box['l']
-            
-            if current_x + current_max_l <= truck_l and box['w'] <= truck_w:
-                bin_data.append({'x': current_x, 'y': current_y, 'l': box['l'], 'w': box['w'], 'rid': box['rid']})
-                current_y += box['w']
-                total_items[box['rid']]['packed'] += 1
+    packer.pack()
     
-    # 畫圖邏輯
-    if len(bin_data) > 0:
+    if len(packer) > 0:
+        bin_data = packer[0]
         fig, ax = plt.subplots(figsize=(12, 4)) 
         ax.set_xlim(0, st.session_state['truck_l'])
         ax.set_ylim(0, st.session_state['truck_w'])
@@ -192,14 +159,17 @@ if calc_btn:
         colors = ['#e15759', '#4e79a7', '#f28e2b', '#76b7b2', '#59a14f', '#edc949', '#b07aa1', '#ff9da7', '#9c755f', '#bab0ac']
         
         for rect in bin_data:
-            x, y, l, w, rid = rect['x'], rect['y'], rect['l'], rect['w'], rect['rid']
+            # 畫圖時把 X 和 Y 軸對調回來
+            x, y, w, h, rid = rect.y, rect.x, rect.height, rect.width, rect.rid
+            
+            total_items[rid]['packed'] += 1
             color = colors[rid % len(colors)]
             
-            ax.add_patch(patches.Rectangle((x, y), l, w, linewidth=1, edgecolor='white', facecolor=color))
-            ax.text(x + l/2, y + w/2, f"{total_items[rid]['name']}\n{l}x{w}", 
+            ax.add_patch(patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='white', facecolor=color))
+            ax.text(x + w/2, y + h/2, f"{total_items[rid]['name']}\n{w}x{h}", 
                     ha='center', va='center', color='white', fontsize=8, fontweight='bold')
             
-        ax.set_title("裝載俯視圖 (左側為車頭，啟用完全人類築牆排版)")
+        ax.set_title("裝載俯視圖 (強迫緊貼車頭，無縫隙排版)")
         ax.set_xlabel("車斗長度 (cm)")
         ax.set_ylabel("車斗寬度 (cm)")
         st.pyplot(fig)
