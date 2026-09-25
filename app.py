@@ -17,7 +17,7 @@ def init_state():
         {"name": "ETTN", "l": 65, "w": 95, "qty": 0, "priority": False, "type": "regular"},
         {"name": "DPS2", "l": 80, "w": 126, "qty": 0, "priority": False, "type": "regular"},
         {"name": "UCU", "l": 61, "w": 106, "qty": 0, "priority": False, "type": "regular"},
-        {"name": "ICP", "l": 1, "w": 1, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "ICP", "l": 82, "w": 82, "qty": 0, "priority": False, "type": "regular"},
         {"name": "APC", "l": 1, "w": 1, "qty": 0, "priority": False, "type": "regular"},
         {"name": "IOS大", "l": 122, "w": 80, "qty": 0, "priority": False, "type": "regular"},
         {"name": "IOS小", "l": 102, "w": 80, "qty": 0, "priority": False, "type": "regular"},
@@ -26,7 +26,6 @@ def init_state():
         {"name": "辛巳小", "l": 70, "w": 46, "qty": 0, "priority": False, "type": "regular"},
         {"name": "SDRM", "l": 67, "w": 56, "qty": 0, "priority": False, "type": "regular"},
         {"name": "CUP", "l": 90, "w": 56, "qty": 0, "priority": False, "type": "regular"},
-        {"name": "CUP SOD", "l": 80, "w": 50, "qty": 0, "priority": False, "type": "regular"}
     ]
 
 if 'items' not in st.session_state:
