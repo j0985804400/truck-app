@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.font_manager as fm
 import os
-from rectpack import newPacker, PackingBin, SORT_NONE, MaxRectsBl
+from rectpack import newPacker, PackingBin, SORT_NONE, MaxRectsBssf
 
 # === 字型設定 ===
 font_path = "NotoSansTC-VariableFont_wght.ttf"
@@ -110,8 +110,11 @@ with b2:
     st.button("🔄 一鍵清空數量", on_click=reset_all, use_container_width=True)
 
 if calc_btn:
-    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=MaxRectsBl)
-    packer.add_bin(st.session_state['truck_l'], st.session_state['truck_w']) 
+    # 允許自動旋轉，使用最頂級的對齊補洞引擎 MaxRectsBssf
+    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=MaxRectsBssf)
+    
+    # 【超級關鍵】將車寬(243)設為 X 軸，車長(820)設為 Y 軸！
+    packer.add_bin(st.session_state['truck_w'], st.session_state['truck_l']) 
     
     total_items = {}
     rectangles_to_pack = []
@@ -128,6 +131,7 @@ if calc_btn:
                     'name': item['name']
                 })
     
+    # 排序：優先放車頭的先算，再來是面積最大的箱子，保證底部最穩固
     rectangles_to_pack.sort(key=lambda x: (-x['pri'], -(x['l']*x['w']), -max(x['l'], x['w']), x['name']))
     
     for r in rectangles_to_pack:
@@ -138,72 +142,32 @@ if calc_btn:
     if len(packer) > 0:
         bin_data = packer[0]
         
-        # ========================================================
-        # 🌟 外掛級：物理重力推擠引擎 (完全模擬你畫的紅色箭頭) 🌟
-        # ========================================================
-        placed_boxes = []
-        for rect in bin_data:
-            placed_boxes.append({
-                'x': rect.x, 'y': rect.y, 'w': rect.width, 'h': rect.height, 'rid': rect.rid
-            })
-
-        moved = True
-        while moved:
-            moved = False
-            # 從最靠近車頭、最底下的箱子開始處理
-            placed_boxes.sort(key=lambda b: (b['x'], b['y']))
-            
-            for i, box in enumerate(placed_boxes):
-                # 1. 往左推 (模擬人類把箱子往車頭塞)
-                new_x = 0
-                for j, other in enumerate(placed_boxes):
-                    if i == j: continue
-                    # 如果別的箱子在它的左邊，並且垂直方向有交疊，就計算會不會撞到
-                    if other['x'] + other['w'] <= box['x']:
-                        if (box['y'] < other['y'] + other['h']) and (box['y'] + box['h'] > other['y']):
-                            new_x = max(new_x, other['x'] + other['w'])
-                
-                # 如果算出來的最左邊界比現在的位置還要前面，就推進去！
-                if box['x'] > new_x:
-                    box['x'] = new_x
-                    moved = True
-                    
-                # 2. 往下壓 (模擬把懸空的箱子往下靠齊)
-                new_y = 0
-                for j, other in enumerate(placed_boxes):
-                    if i == j: continue
-                    # 如果別的箱子在它的下方，並且水平方向有交疊，就計算會不會撞到
-                    if other['y'] + other['h'] <= box['y']:
-                        if (box['x'] < other['x'] + other['w']) and (box['x'] + box['w'] > other['x']):
-                            new_y = max(new_y, other['y'] + other['h'])
-                            
-                if box['y'] > new_y:
-                    box['y'] = new_y
-                    moved = True
-        # ========================================================
+        # 畫布改成「直立的長方形」，比例剛好符合手機螢幕
+        fig, ax = plt.subplots(figsize=(6, 15)) 
         
-        fig, ax = plt.subplots(figsize=(12, 4)) 
-        ax.set_xlim(0, st.session_state['truck_l'])
-        ax.set_ylim(0, st.session_state['truck_w'])
+        # X 軸現在是車寬，Y 軸現在是車長
+        ax.set_xlim(0, st.session_state['truck_w'])
+        ax.set_ylim(0, st.session_state['truck_l'])
         ax.set_aspect('equal')
         
-        ax.add_patch(patches.Rectangle((0, 0), st.session_state['truck_l'], st.session_state['truck_w'], fill=False, lw=3))
+        ax.add_patch(patches.Rectangle((0, 0), st.session_state['truck_w'], st.session_state['truck_l'], fill=False, lw=3))
         
         colors = ['#e15759', '#4e79a7', '#f28e2b', '#76b7b2', '#59a14f', '#edc949', '#b07aa1', '#ff9da7', '#9c755f', '#bab0ac']
         
-        for box in placed_boxes:
-            x, y, w, h, rid = box['x'], box['y'], box['w'], box['h'], box['rid']
+        for rect in bin_data:
+            x, y, w, h, rid = rect.x, rect.y, rect.width, rect.height, rect.rid
             
             total_items[rid]['packed'] += 1
             color = colors[rid % len(colors)]
             
             ax.add_patch(patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='white', facecolor=color))
+            # 顯示實際擺放的寬高
             ax.text(x + w/2, y + h/2, f"{total_items[rid]['name']}\n{w}x{h}", 
                     ha='center', va='center', color='white', fontsize=8, fontweight='bold')
             
-        ax.set_title("裝載俯視圖 (啟用物理重力推擠，保證無懸空廢區)")
-        ax.set_xlabel("車斗長度 (cm)")
-        ax.set_ylabel("車斗寬度 (cm)")
+        ax.set_title("裝載俯視圖 (下方為車頭，向上堆疊車尾)")
+        ax.set_xlabel("車斗寬度 (cm)")
+        ax.set_ylabel("車斗長度 (cm)")
         st.pyplot(fig)
         
         st.success("✅ 成功裝載清單")
