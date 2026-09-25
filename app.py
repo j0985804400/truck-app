@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.font_manager as fm
 import os
-from rectpack import newPacker, PackingBin, SORT_NONE, MaxRectsBssf
+# 【換上專治邊緣空白的切片引擎 GuillotineBssfSas】
+from rectpack import newPacker, PackingBin, SORT_NONE, GuillotineBssfSas
 
 # === 字型設定 ===
 font_path = "NotoSansTC-VariableFont_wght.ttf"
@@ -47,7 +48,7 @@ if 'items' not in st.session_state:
 def add_temp_item():
     st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "priority": False, "type": "temp"})
 
-# 徹底清除 UI 暫存記憶體
+# 清除 UI 暫存記憶體
 def reset_all():
     for key in list(st.session_state.keys()):
         if str(key).startswith('qty_') or str(key).startswith('edit_'):
@@ -110,10 +111,10 @@ with b2:
     st.button("🔄 一鍵清空數量", on_click=reset_all, use_container_width=True)
 
 if calc_btn:
-    # 允許自動旋轉，使用最頂級的對齊補洞引擎 MaxRectsBssf
-    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=MaxRectsBssf)
+    # 允許自動旋轉，並換上會將空間切成方正條狀的 GuillotineBssfSas 演算法
+    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=GuillotineBssfSas)
     
-    # 【超級關鍵】將車寬(243)設為 X 軸，車長(820)設為 Y 軸！
+    # 車寬為 X 軸，車長為 Y 軸 (直立顯示)
     packer.add_bin(st.session_state['truck_w'], st.session_state['truck_l']) 
     
     total_items = {}
@@ -131,7 +132,7 @@ if calc_btn:
                     'name': item['name']
                 })
     
-    # 排序：優先放車頭的先算，再來是面積最大的箱子，保證底部最穩固
+    # 排序：打勾車頭優先 > 佔地面積大優先 > 邊長最長優先 > 品名群聚
     rectangles_to_pack.sort(key=lambda x: (-x['pri'], -(x['l']*x['w']), -max(x['l'], x['w']), x['name']))
     
     for r in rectangles_to_pack:
@@ -142,10 +143,9 @@ if calc_btn:
     if len(packer) > 0:
         bin_data = packer[0]
         
-        # 畫布改成「直立的長方形」，比例剛好符合手機螢幕
+        # 畫布比例 6:15，符合手機直向螢幕
         fig, ax = plt.subplots(figsize=(6, 15)) 
         
-        # X 軸現在是車寬，Y 軸現在是車長
         ax.set_xlim(0, st.session_state['truck_w'])
         ax.set_ylim(0, st.session_state['truck_l'])
         ax.set_aspect('equal')
@@ -165,7 +165,7 @@ if calc_btn:
             ax.text(x + w/2, y + h/2, f"{total_items[rid]['name']}\n{w}x{h}", 
                     ha='center', va='center', color='white', fontsize=8, fontweight='bold')
             
-        ax.set_title("裝載俯視圖 (下方為車頭，向上堆疊車尾)")
+        ax.set_title("裝載俯視圖 (切片對齊演算法，強制橫向鋪滿)")
         ax.set_xlabel("車斗寬度 (cm)")
         ax.set_ylabel("車斗長度 (cm)")
         st.pyplot(fig)
