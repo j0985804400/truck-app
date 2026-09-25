@@ -24,11 +24,11 @@ def init_state():
         {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": True, "type": "regular"},
         {"name": "LAM", "l": 1, "w": 1, "qty": 0, "priority": False, "type": "regular"},
         {"name": "EX2", "l": 60, "w": 67, "qty": 0, "priority": False, "type": "regular"},
-        {"name": "WET", "l": 64, "w": 80, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "WET", "l": 62, "w": 78, "qty": 0, "priority": False, "type": "regular"},
         {"name": "WET長箱", "l": 102, "w": 52, "qty": 0, "priority": False, "type": "regular"},
         {"name": "ETTN", "l": 65, "w": 95, "qty": 0, "priority": False, "type": "regular"},
-        {"name": "DPS2", "l": 80, "w": 128, "qty": 0, "priority": False, "type": "regular"},
-        {"name": "UCU", "l": 61, "w": 106, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "DPS2", "l": 80, "w": 126, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "UCU", "l": 1, "w": 1, "qty": 0, "priority": False, "type": "regular"},
         {"name": "ICP", "l": 1, "w": 1, "qty": 0, "priority": False, "type": "regular"},
         {"name": "APC", "l": 1, "w": 1, "qty": 0, "priority": False, "type": "regular"},
         {"name": "IOS大", "l": 122, "w": 80, "qty": 0, "priority": False, "type": "regular"},
@@ -59,8 +59,25 @@ def reset_all():
 st.set_page_config(page_title="貨車裝箱計算器", layout="centered")
 st.title("📦 貨車裝箱計算器")
 
-st.markdown(f"<p style='color: gray; margin-bottom: 20px;'>🚚 目前車斗規格：長 {st.session_state['truck_l']} cm × 寬 {st.session_state['truck_w']} cm</p>", unsafe_allow_html=True)
+st.markdown(f"<p style='color: gray; margin-bottom: 5px;'>🚚 目前車斗規格：長 {st.session_state['truck_l']} cm × 寬 {st.session_state['truck_w']} cm</p>", unsafe_allow_html=True)
 
+# === 新增功能：即時面積初估 ===
+truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
+total_item_area = sum(item['l'] * item['w'] * item['qty'] for item in st.session_state['items'])
+usage_pct = (total_item_area / truck_area) * 100 if truck_area > 0 else 0
+
+if usage_pct > 100:
+    st.error(f"🚨 **絕對載不下！** 貨物總面積已達 {usage_pct:.1f}% (超過車斗極限)")
+elif usage_pct > 85:
+    st.warning(f"⚠️ **非常極限！** 面積佔用 {usage_pct:.1f}% (可能因縫隙而裝不下，建議按計算排版確認)")
+elif usage_pct > 0:
+    st.info(f"🟢 **面積初估安全**：目前佔用 {usage_pct:.1f}%")
+
+# 顯示視覺化進度條 (最多顯示到 1.0 即 100%)
+if usage_pct > 0:
+    st.progress(min(usage_pct / 100, 1.0))
+
+st.markdown("---")
 st.subheader("📥 貨物數量設定")
 
 for i, item in enumerate(st.session_state['items']):
@@ -93,11 +110,9 @@ with b1:
 with b2:
     st.button("🔄 一鍵清空數量", on_click=reset_all, use_container_width=True)
 
-# 3. 核心運算
+# 3. 核心運算 (維持你的神級引力靠左排版)
 if calc_btn:
     packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=MaxRectsBl)
-    
-    # 【神級修改 1】把車寬當成車長餵給演算法，騙演算法向左邊吸滿
     packer.add_bin(st.session_state['truck_w'], st.session_state['truck_l'])
     
     total_items = {}
@@ -109,7 +124,6 @@ if calc_btn:
             for _ in range(item['qty']):
                 rectangles_to_pack.append((item['l'], item['w'], idx, item['priority']))
     
-    # 排序：優先級高的絕對排前面
     rectangles_to_pack.sort(key=lambda x: (-x[3], -(x[0]*x[1])))
     
     for r in rectangles_to_pack:
@@ -122,21 +136,19 @@ if calc_btn:
         fig, ax = plt.subplots(figsize=(12, 4)) 
         ax.set_xlim(0, st.session_state['truck_l'])
         ax.set_ylim(0, st.session_state['truck_w'])
-        ax.set_aspect('equal') # 鎖定 1:1，確保不會變形
+        ax.set_aspect('equal')
         
         ax.add_patch(patches.Rectangle((0, 0), st.session_state['truck_l'], st.session_state['truck_w'], fill=False, lw=3))
         
         colors = ['#e15759', '#4e79a7', '#f28e2b', '#76b7b2', '#59a14f', '#edc949']
         
         for rect in bin_data:
-            # 【神級修改 2】畫圖的時候，把 X 和 Y 軸對調回來！
             x, y, w, h, rid = rect.y, rect.x, rect.height, rect.width, rect.rid
             
             total_items[rid]['packed'] += 1
             color = colors[rid % len(colors)]
             
             ax.add_patch(patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='white', facecolor=color))
-            # 顯示旋轉後的實際長寬尺寸
             ax.text(x + w/2, y + h/2, f"{total_items[rid]['name']}\n{w}x{h}", 
                     ha='center', va='center', color='white', fontsize=8, fontweight='bold')
             
