@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.font_manager as fm
 import os
-from rectpack import newPacker, PackingBin, SORT_NONE, GuillotineBafSas
+from rectpack import newPacker, PackingBin, PackingMode, SORT_NONE, MaxRectsBssf
 
 # === 字型設定 ===
 font_path = "NotoSansTC-VariableFont_wght.ttf"
@@ -109,11 +109,10 @@ with b1:
 with b2:
     st.button("🔄 一鍵清空數量", on_click=reset_all, use_container_width=True)
 
-# 3. 核心運算 (改用帶狀切割 Guillotine 演算法)
+# 3. 核心運算
 if calc_btn:
-    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=GuillotineBafSas)
-    
-    # 車寬與車長對調傳入以向左吸滿
+    # 【神級優化】關閉自動旋轉 (rotation=False)，改由我們的程式預先判斷最佳擺放方向！
+    packer = newPacker(rotation=False, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=MaxRectsBssf)
     packer.add_bin(st.session_state['truck_w'], st.session_state['truck_l'])
     
     total_items = {}
@@ -122,18 +121,40 @@ if calc_btn:
     for idx, item in enumerate(st.session_state['items']):
         if item['qty'] > 0:
             total_items[idx] = {'name': item['name'], 'req': item['qty'], 'packed': 0}
+            
+            # === 人類理貨大腦：算出最能完美塞滿車寬(243)的方向 ===
+            w1, w2 = item['l'], item['w']
+            
+            fit_1 = st.session_state['truck_w'] // w1
+            waste_1 = st.session_state['truck_w'] - (fit_1 * w1)
+            
+            fit_2 = st.session_state['truck_w'] // w2
+            waste_2 = st.session_state['truck_w'] - (fit_2 * w2)
+            
+            # 找出浪費最少(最容易排成一橫排)的方向
+            if fit_1 == 0 and fit_2 == 0:
+                best_w, best_l = w1, w2
+            elif fit_1 == 0:
+                best_w, best_l = w2, w1
+            elif fit_2 == 0:
+                best_w, best_l = w1, w2
+            elif waste_1 < waste_2:
+                best_w, best_l = w1, w2
+            elif waste_2 < waste_1:
+                best_w, best_l = w2, w1
+            else:
+                # 如果浪費空間一樣多，優先選「佔用車子深度較短」的方向，這樣最省車長！
+                if w2 < w1:
+                    best_w, best_l = w1, w2
+                else:
+                    best_w, best_l = w2, w1
+                    
             for _ in range(item['qty']):
-                rectangles_to_pack.append((item['l'], item['w'], idx, item['priority']))
+                # 強制使用算好的最佳方向，不准演算法亂動
+                rectangles_to_pack.append((best_w, best_l, idx, item['priority']))
     
-    # 強化排序：優先處理能整除車寬的箱子，促成成排對齊
-    truck_w = st.session_state['truck_w']
-    def sort_key(x):
-        pri = x[3]
-        l, w = x[0], x[1]
-        fits_perfectly = (truck_w % l < 10) or (truck_w % w < 10)
-        return (-pri, -fits_perfectly, -max(l, w), -(l*w))
-
-    rectangles_to_pack.sort(key=sort_key)
+    # 排序邏輯優化：優先級別高的放最前面 > 車深(best_l)佔用較長的先放 > 較寬的先放
+    rectangles_to_pack.sort(key=lambda x: (-x[3], -x[1], -x[0]))
     
     for r in rectangles_to_pack:
         packer.add_rect(r[0], r[1], r[2])
@@ -152,6 +173,7 @@ if calc_btn:
         colors = ['#e15759', '#4e79a7', '#f28e2b', '#76b7b2', '#59a14f', '#edc949']
         
         for rect in bin_data:
+            # 畫圖時把 X Y 軸換回來
             x, y, w, h, rid = rect.y, rect.x, rect.height, rect.width, rect.rid
             
             total_items[rid]['packed'] += 1
@@ -161,7 +183,7 @@ if calc_btn:
             ax.text(x + w/2, y + h/2, f"{total_items[rid]['name']}\n{w}x{h}", 
                     ha='center', va='center', color='white', fontsize=8, fontweight='bold')
             
-        ax.set_title("裝載俯視圖 (左側為車頭，帶狀成排引擎)")
+        ax.set_title("裝載俯視圖 (左側為車頭，啟用人類成排智慧邏輯)")
         ax.set_xlabel("車斗長度 (cm)")
         ax.set_ylabel("車斗寬度 (cm)")
         st.pyplot(fig)
