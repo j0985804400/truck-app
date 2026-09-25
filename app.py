@@ -10,7 +10,7 @@ def init_state():
     
     st.session_state['items'] = [
         {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": True, "type": "regular"},
-        {"name": "LAM", "l": 1, "w": 1, "qty": 0, "priority": False, "type": "regular"},
+        {"name": "LAM", "l": 75, "w": 105, "qty": 0, "priority": False, "type": "regular"},
         {"name": "EX2", "l": 60, "w": 67, "qty": 0, "priority": False, "type": "regular"},
         {"name": "WET", "l": 62, "w": 78, "qty": 0, "priority": False, "type": "regular"},
         {"name": "WET長箱", "l": 102, "w": 52, "qty": 0, "priority": False, "type": "regular"},
