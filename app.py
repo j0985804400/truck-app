@@ -5,6 +5,10 @@ def init_state():
     st.session_state['truck_l'] = 820
     st.session_state['truck_w'] = 243
     
+    # 初始化清空版本號
+    if 'reset_count' not in st.session_state:
+        st.session_state['reset_count'] = 0
+    
     st.session_state['items'] = [
         {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": True, "type": "regular"},
         {"name": "LAM", "l": 1, "w": 1, "qty": 0, "priority": False, "type": "regular"},
@@ -32,11 +36,9 @@ if 'items' not in st.session_state:
 def add_temp_item():
     st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "priority": False, "type": "temp"})
 
-# 【絕對歸零核心】直接把所有 number_input 的暫存狀態設為 0 並刪除多餘暫存
+# 【安全清空】透過改變 reset_count 來讓所有數字輸入框無痛重建歸零
 def reset_all():
-    for i in range(len(st.session_state['items'])):
-        st.session_state[f'qty_{i}'] = 0
-        
+    st.session_state['reset_count'] += 1
     for item in st.session_state['items']:
         item['qty'] = 0
 
@@ -63,6 +65,9 @@ if usage_pct > 0:
 st.markdown("---")
 st.subheader("📥 貨物數量設定")
 
+# 每次點擊清空時，key 加上 reset_count 號碼，強制網頁建立全新的輸入框元件，完美避開報錯
+r_id = st.session_state.get('reset_count', 0)
+
 for i, item in enumerate(st.session_state['items']):
     col_info, col_qty = st.columns([6.5, 3.5])
     
@@ -72,32 +77,29 @@ for i, item in enumerate(st.session_state['items']):
         st.markdown(f"<div style='margin-top: 12px;'><b>{icon} {item['name']}</b> {pri_text} <span style='font-size:0.8em; color:gray;'>({item['l']}x{item['w']})</span></div>", unsafe_allow_html=True)
     
     with col_qty:
-        # 確保綁定 st.session_state 讓歸零按鈕能強制作動
-        if f'qty_{i}' not in st.session_state:
-            st.session_state[f'qty_{i}'] = item['qty']
-            
         item['qty'] = st.number_input(
             "數量", 
+            value=item['qty'], 
             min_value=0, 
             step=1, 
-            key=f'qty_{i}', 
+            key=f'qty_{i}_v{r_id}', 
             label_visibility="collapsed"
         )
     
     if item["type"] == "temp":
         with st.expander("✏️ 調整臨時貨物設定"):
-            item['name'] = st.text_input("品名", value=item['name'], key=f"edit_name_{i}")
+            item['name'] = st.text_input("品名", value=item['name'], key=f"edit_name_{i}_v{r_id}")
             c1, c2 = st.columns(2)
-            item['l'] = c1.number_input("長(cm)", value=item['l'], min_value=1, step=5, key=f"edit_l_{i}")
-            item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f"edit_w_{i}")
-            item['priority'] = st.checkbox("⭐ 優先放車頭", value=item['priority'], key=f"edit_pri_{i}")
+            item['l'] = c1.number_input("長(cm)", value=item['l'], min_value=1, step=5, key=f"edit_l_{i}_v{r_id}")
+            item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f"edit_w_{i}_v{r_id}")
+            item['priority'] = st.checkbox("⭐ 優先放車頭", value=item['priority'], key=f"edit_pri_{i}_v{r_id}")
             
     st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
 
 st.button("➕ 新增臨時貨物", on_click=add_temp_item, use_container_width=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 乾淨俐落的單獨一鍵清空按鈕
+# 乾淨俐落的一鍵清空按鈕
 if st.button("🔄 一鍵清空數量", type="secondary", use_container_width=True):
     reset_all()
     st.rerun()
