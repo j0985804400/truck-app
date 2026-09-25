@@ -5,7 +5,6 @@ def init_state():
     st.session_state['truck_l'] = 820
     st.session_state['truck_w'] = 243
     
-    # 初始化清空版本號
     if 'reset_count' not in st.session_state:
         st.session_state['reset_count'] = 0
     
@@ -36,7 +35,6 @@ if 'items' not in st.session_state:
 def add_temp_item():
     st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "priority": False, "type": "temp"})
 
-# 【安全清空】透過改變 reset_count 來讓所有數字輸入框無痛重建歸零
 def reset_all():
     st.session_state['reset_count'] += 1
     for item in st.session_state['items']:
@@ -47,15 +45,15 @@ st.title("📦 貨車裝箱防爆計算器")
 
 st.markdown(f"<p style='color: gray; margin-bottom: 5px;'>🚚 目前車斗規格：長 {st.session_state['truck_l']} cm × 寬 {st.session_state['truck_w']} cm</p>", unsafe_allow_html=True)
 
-# === 即時面積防爆防線 (精準數學換算) ===
+# === 即時面積防爆防線 ===
 truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
 total_item_area = sum(item['l'] * item['w'] * item['qty'] for item in st.session_state['items'])
 usage_pct = (total_item_area / truck_area) * 100 if truck_area > 0 else 0
 
 if usage_pct > 100:
-    st.error(f"🚨 **面積超載！** 目前總面積佔用達 {usage_pct:.1f}% (已超越車斗極限，絕對載不下)")
+    st.error(f"🚨 **面積超載！** 目前總面積佔用達 {usage_pct:.1f}% (超越車斗極限)")
 elif usage_pct > 85:
-    st.warning(f"⚠️ **非常極限！** 面積佔用 {usage_pct:.1f}% (接近滿載，需注意實際排版縫隙)")
+    st.warning(f"⚠️ **非常極限！** 面積佔用 {usage_pct:.1f}% (接近滿載)")
 elif usage_pct > 0:
     st.info(f"🟢 **面積初估安全**：目前佔用 {usage_pct:.1f}%")
 
@@ -65,16 +63,15 @@ if usage_pct > 0:
 st.markdown("---")
 st.subheader("📥 貨物數量設定")
 
-# 每次點擊清空時，key 加上 reset_count 號碼，強制網頁建立全新的輸入框元件，完美避開報錯
 r_id = st.session_state.get('reset_count', 0)
 
 for i, item in enumerate(st.session_state['items']):
-    col_info, col_qty = st.columns([6.5, 3.5])
+    col_info, col_qty = st.columns([6.2, 3.8])
     
     with col_info:
-        icon = "📍" if item["type"] == "regular" else "⚠️"
-        pri_text = "⭐" if item["priority"] else ""
-        st.markdown(f"<div style='margin-top: 12px;'><b>{icon} {item['name']}</b> {pri_text} <span style='font-size:0.8em; color:gray;'>({item['l']}x{item['w']})</span></div>", unsafe_allow_html=True)
+        # 直接把星星符號放在最前方取代棒棒堂
+        pri_text = "⭐ " if item["priority"] else ""
+        st.markdown(f"<div style='margin-top: 8px; font-size: 0.95em;'><b>{pri_text}{item['name']}</b> <span style='font-size:0.75em; color:gray;'>({item['l']}x{item['w']})</span></div>", unsafe_allow_html=True)
     
     with col_qty:
         item['qty'] = st.number_input(
@@ -88,23 +85,22 @@ for i, item in enumerate(st.session_state['items']):
     
     if item["type"] == "temp":
         with st.expander("✏️ 調整臨時貨物設定"):
-            item['name'] = st.text_input("品名", value=item['name'], key=f"edit_name_{i}_v{r_id}")
+            item['name'] = st.text_input("品名", value=item['name'], key=f'edit_name_{i}_v{r_id}')
             c1, c2 = st.columns(2)
-            item['l'] = c1.number_input("長(cm)", value=item['l'], min_value=1, step=5, key=f"edit_l_{i}_v{r_id}")
-            item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f"edit_w_{i}_v{r_id}")
-            item['priority'] = st.checkbox("⭐ 優先放車頭", value=item['priority'], key=f"edit_pri_{i}_v{r_id}")
+            item['l'] = c1.number_input("長(cm)", value=item['l'], min_value=1, step=5, key=f'edit_l_{i}_v{r_id}')
+            item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f'edit_w_{i}_v{r_id}')
+            item['priority'] = st.checkbox("⭐ 優先放車頭", value=item['priority'], key=f'edit_pri_{i}_v{r_id}')
             
-    st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
+    # 極度縮小項目間隔線，讓畫面變得很緊湊
+    st.markdown("<hr style='margin: 1px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
 
 st.button("➕ 新增臨時貨物", on_click=add_temp_item, use_container_width=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 乾淨俐落的一鍵清空按鈕
 if st.button("🔄 一鍵清空數量", type="secondary", use_container_width=True):
     reset_all()
     st.rerun()
 
-# 總結清單顯示
 if total_item_area > 0:
     st.markdown("---")
     st.subheader("📋 目前已選貨物統計")
