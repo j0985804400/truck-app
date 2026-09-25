@@ -32,15 +32,13 @@ if 'items' not in st.session_state:
 def add_temp_item():
     st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "priority": False, "type": "temp"})
 
-# 徹底清除 UI 暫存記憶體與歸零
+# 【絕對歸零核心】直接把所有 number_input 的暫存狀態設為 0 並刪除多餘暫存
 def reset_all():
-    for key in list(st.session_state.keys()):
-        if str(key).startswith('qty_') or str(key).startswith('edit_'):
-            del st.session_state[key]
-            
+    for i in range(len(st.session_state['items'])):
+        st.session_state[f'qty_{i}'] = 0
+        
     for item in st.session_state['items']:
-        if item['type'] == 'regular':
-            item['qty'] = 0
+        item['qty'] = 0
 
 st.set_page_config(page_title="貨車裝箱防爆計算器", layout="centered")
 st.title("📦 貨車裝箱防爆計算器")
@@ -74,7 +72,17 @@ for i, item in enumerate(st.session_state['items']):
         st.markdown(f"<div style='margin-top: 12px;'><b>{icon} {item['name']}</b> {pri_text} <span style='font-size:0.8em; color:gray;'>({item['l']}x{item['w']})</span></div>", unsafe_allow_html=True)
     
     with col_qty:
-        item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f"qty_{i}", label_visibility="collapsed")
+        # 確保綁定 st.session_state 讓歸零按鈕能強制作動
+        if f'qty_{i}' not in st.session_state:
+            st.session_state[f'qty_{i}'] = item['qty']
+            
+        item['qty'] = st.number_input(
+            "數量", 
+            min_value=0, 
+            step=1, 
+            key=f'qty_{i}', 
+            label_visibility="collapsed"
+        )
     
     if item["type"] == "temp":
         with st.expander("✏️ 調整臨時貨物設定"):
@@ -89,14 +97,10 @@ for i, item in enumerate(st.session_state['items']):
 st.button("➕ 新增臨時貨物", on_click=add_temp_item, use_container_width=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
-b1, b2 = st.columns(2)
-with b1:
-    if st.button("▶️ 重新整理 / 計算總結", type="primary", use_container_width=True):
-        st.rerun()
-with b2:
-    if st.button("🔄 一鍵清空數量", use_container_width=True):
-        reset_all()
-        st.rerun()
+# 乾淨俐落的單獨一鍵清空按鈕
+if st.button("🔄 一鍵清空數量", type="secondary", use_container_width=True):
+    reset_all()
+    st.rerun()
 
 # 總結清單顯示
 if total_item_area > 0:
