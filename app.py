@@ -3,7 +3,7 @@ import os
 
 def init_state():
     st.session_state['truck_l'] = 820
-    st.session_state['truck_w'] = 243
+    st.session_state['truck_w'] = 240
     
     if 'reset_count' not in st.session_state:
         st.session_state['reset_count'] = 0
@@ -39,8 +39,8 @@ def reset_all():
     for item in st.session_state['items']:
         item['qty'] = 0
 
-st.set_page_config(page_title="貨車裝箱防爆計算器", layout="centered")
-st.title("📦 貨車裝箱防爆計算器")
+st.set_page_config(page_title="貨車裝箱計算器", layout="centered")
+st.title("📦 貨車裝箱計算器")
 
 st.markdown(f"<p style='color: gray; margin-bottom: 5px;'>🚚 目前車斗規格：長 {st.session_state['truck_l']} cm × 寬 {st.session_state['truck_w']} cm</p>", unsafe_allow_html=True)
 
