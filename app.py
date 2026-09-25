@@ -3,8 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.font_manager as fm
 import os
-# 【換上最聰明的填縫引擎 MaxRectsBaf (Best Area Fit)】
-from rectpack import newPacker, PackingBin, SORT_NONE, MaxRectsBaf
+from rectpack import newPacker, PackingBin, SORT_NONE, MaxRectsBl
 
 # === 字型設定 ===
 font_path = "NotoSansTC-VariableFont_wght.ttf"
@@ -48,7 +47,7 @@ if 'items' not in st.session_state:
 def add_temp_item():
     st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "priority": False, "type": "temp"})
 
-# 【完美修復】強制清除 UI 暫存記憶體，保證按鈕一鍵歸零
+# 徹底清除 UI 暫存記憶體
 def reset_all():
     for key in list(st.session_state.keys()):
         if str(key).startswith('qty_') or str(key).startswith('edit_'):
@@ -58,13 +57,11 @@ def reset_all():
         if item['type'] == 'regular':
             item['qty'] = 0
 
-# 1. 介面設定
 st.set_page_config(page_title="貨車裝箱計算器", layout="centered")
 st.title("📦 貨車裝箱計算器")
 
 st.markdown(f"<p style='color: gray; margin-bottom: 5px;'>🚚 目前車斗規格：長 {st.session_state['truck_l']} cm × 寬 {st.session_state['truck_w']} cm</p>", unsafe_allow_html=True)
 
-# === 即時面積初估 ===
 truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
 total_item_area = sum(item['l'] * item['w'] * item['qty'] for item in st.session_state['items'])
 usage_pct = (total_item_area / truck_area) * 100 if truck_area > 0 else 0
@@ -112,10 +109,8 @@ with b1:
 with b2:
     st.button("🔄 一鍵清空數量", on_click=reset_all, use_container_width=True)
 
-# 3. 核心運算
 if calc_btn:
-    # 允許旋轉，使用 MaxRectsBaf (Best Area Fit) 尋找最完美的角落
-    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=MaxRectsBaf)
+    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=MaxRectsBl)
     packer.add_bin(st.session_state['truck_l'], st.session_state['truck_w']) 
     
     total_items = {}
@@ -133,7 +128,6 @@ if calc_btn:
                     'name': item['name']
                 })
     
-    # 優先級別 > 面積最大 > 邊長最長 > 品名群聚
     rectangles_to_pack.sort(key=lambda x: (-x['pri'], -(x['l']*x['w']), -max(x['l'], x['w']), x['name']))
     
     for r in rectangles_to_pack:
@@ -143,6 +137,51 @@ if calc_btn:
     
     if len(packer) > 0:
         bin_data = packer[0]
+        
+        # ========================================================
+        # 🌟 外掛級：物理重力推擠引擎 (完全模擬你畫的紅色箭頭) 🌟
+        # ========================================================
+        placed_boxes = []
+        for rect in bin_data:
+            placed_boxes.append({
+                'x': rect.x, 'y': rect.y, 'w': rect.width, 'h': rect.height, 'rid': rect.rid
+            })
+
+        moved = True
+        while moved:
+            moved = False
+            # 從最靠近車頭、最底下的箱子開始處理
+            placed_boxes.sort(key=lambda b: (b['x'], b['y']))
+            
+            for i, box in enumerate(placed_boxes):
+                # 1. 往左推 (模擬人類把箱子往車頭塞)
+                new_x = 0
+                for j, other in enumerate(placed_boxes):
+                    if i == j: continue
+                    # 如果別的箱子在它的左邊，並且垂直方向有交疊，就計算會不會撞到
+                    if other['x'] + other['w'] <= box['x']:
+                        if (box['y'] < other['y'] + other['h']) and (box['y'] + box['h'] > other['y']):
+                            new_x = max(new_x, other['x'] + other['w'])
+                
+                # 如果算出來的最左邊界比現在的位置還要前面，就推進去！
+                if box['x'] > new_x:
+                    box['x'] = new_x
+                    moved = True
+                    
+                # 2. 往下壓 (模擬把懸空的箱子往下靠齊)
+                new_y = 0
+                for j, other in enumerate(placed_boxes):
+                    if i == j: continue
+                    # 如果別的箱子在它的下方，並且水平方向有交疊，就計算會不會撞到
+                    if other['y'] + other['h'] <= box['y']:
+                        if (box['x'] < other['x'] + other['w']) and (box['x'] + box['w'] > other['x']):
+                            new_y = max(new_y, other['y'] + other['h'])
+                            
+                if box['y'] > new_y:
+                    box['y'] = new_y
+                    moved = True
+        # ========================================================
+        
         fig, ax = plt.subplots(figsize=(12, 4)) 
         ax.set_xlim(0, st.session_state['truck_l'])
         ax.set_ylim(0, st.session_state['truck_w'])
@@ -152,8 +191,8 @@ if calc_btn:
         
         colors = ['#e15759', '#4e79a7', '#f28e2b', '#76b7b2', '#59a14f', '#edc949', '#b07aa1', '#ff9da7', '#9c755f', '#bab0ac']
         
-        for rect in bin_data:
-            x, y, w, h, rid = rect.x, rect.y, rect.width, rect.height, rect.rid
+        for box in placed_boxes:
+            x, y, w, h, rid = box['x'], box['y'], box['w'], box['h'], box['rid']
             
             total_items[rid]['packed'] += 1
             color = colors[rid % len(colors)]
@@ -162,7 +201,7 @@ if calc_btn:
             ax.text(x + w/2, y + h/2, f"{total_items[rid]['name']}\n{w}x{h}", 
                     ha='center', va='center', color='white', fontsize=8, fontweight='bold')
             
-        ax.set_title("裝載俯視圖 (智慧面積匹配，無縫隙補洞)")
+        ax.set_title("裝載俯視圖 (啟用物理重力推擠，保證無懸空廢區)")
         ax.set_xlabel("車斗長度 (cm)")
         ax.set_ylabel("車斗寬度 (cm)")
         st.pyplot(fig)
