@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.font_manager as fm
 import os
-from rectpack import newPacker, PackingBin, PackingMode, SORT_NONE
+# 【修正點 1】正確匯入 MaxRectsBl 演算法
+from rectpack import newPacker, PackingBin, PackingMode, SORT_NONE, MaxRectsBl
 
 # === 字型設定 ===
 font_path = "NotoSansTC-VariableFont_wght.ttf"
@@ -93,9 +94,10 @@ with b1:
 with b2:
     st.button("🔄 一鍵清空數量", on_click=reset_all, use_container_width=True)
 
-# 3. 核心運算：允許旋轉，並改用 MaxRectsBl (靠左下角緊密排列)
+# 3. 核心運算
 if calc_btn:
-    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.MaxRectsBl)
+    # 【修正點 2】正確把 MaxRectsBl 丟給 pack_algo 參數，這樣程式就不會報錯了！
+    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=MaxRectsBl)
     packer.add_bin(st.session_state['truck_l'], st.session_state['truck_w'])
     
     total_items = {}
@@ -117,12 +119,11 @@ if calc_btn:
     
     if len(packer) > 0:
         bin_data = packer[0]
-        # 【修改】因為車斗變長(820)，把圖表的寬度稍微拉長一點
-        fig, ax = plt.subplots(figsize=(12, 4))
+        fig, ax = plt.subplots(figsize=(12, 4)) 
         ax.set_xlim(0, st.session_state['truck_l'])
         ax.set_ylim(0, st.session_state['truck_w'])
         
-        # 【關鍵修復】鎖定 X 軸與 Y 軸比例為 1:1，確保尺寸絕對不變形！
+        # 鎖定 X 軸與 Y 軸比例為 1:1，確保正方形就是正方形
         ax.set_aspect('equal')
         
         ax.add_patch(patches.Rectangle((0, 0), st.session_state['truck_l'], st.session_state['truck_w'], fill=False, lw=3))
