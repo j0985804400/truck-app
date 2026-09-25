@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.font_manager as fm
 import os
-from rectpack import newPacker, PackingBin, PackingMode, SORT_NONE, MaxRectsBssf
+from rectpack import newPacker, PackingBin, SORT_NONE, GuillotineBafSas
 
 # === 字型設定 ===
 font_path = "NotoSansTC-VariableFont_wght.ttf"
@@ -17,11 +17,9 @@ else:
 plt.rcParams['axes.unicode_minus'] = False
 
 def init_state():
-    # 更新為最新車斗尺寸
     st.session_state['truck_l'] = 820
     st.session_state['truck_w'] = 243
     
-    # 更新為最新貨物尺寸 (包含 UCU 更新)
     st.session_state['items'] = [
         {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": True, "type": "regular"},
         {"name": "LAM", "l": 1, "w": 1, "qty": 0, "priority": False, "type": "regular"},
@@ -111,11 +109,11 @@ with b1:
 with b2:
     st.button("🔄 一鍵清空數量", on_click=reset_all, use_container_width=True)
 
-# 3. 核心運算
+# 3. 核心運算 (改用帶狀切割 Guillotine 演算法)
 if calc_btn:
-    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=MaxRectsBssf)
+    packer = newPacker(rotation=True, sort_algo=SORT_NONE, bin_algo=PackingBin.BFF, pack_algo=GuillotineBafSas)
     
-    # 騙演算法向左邊車頭吸滿
+    # 車寬與車長對調傳入以向左吸滿
     packer.add_bin(st.session_state['truck_w'], st.session_state['truck_l'])
     
     total_items = {}
@@ -127,8 +125,15 @@ if calc_btn:
             for _ in range(item['qty']):
                 rectangles_to_pack.append((item['l'], item['w'], idx, item['priority']))
     
-    # 排序：優先級高的排最前面，並且較長邊優先
-    rectangles_to_pack.sort(key=lambda x: (-x[3], -max(x[0], x[1]), -(x[0]*x[1])))
+    # 強化排序：優先處理能整除車寬的箱子，促成成排對齊
+    truck_w = st.session_state['truck_w']
+    def sort_key(x):
+        pri = x[3]
+        l, w = x[0], x[1]
+        fits_perfectly = (truck_w % l < 10) or (truck_w % w < 10)
+        return (-pri, -fits_perfectly, -max(l, w), -(l*w))
+
+    rectangles_to_pack.sort(key=sort_key)
     
     for r in rectangles_to_pack:
         packer.add_rect(r[0], r[1], r[2])
@@ -147,7 +152,6 @@ if calc_btn:
         colors = ['#e15759', '#4e79a7', '#f28e2b', '#76b7b2', '#59a14f', '#edc949']
         
         for rect in bin_data:
-            # 把 X 和 Y 軸對調回來顯示
             x, y, w, h, rid = rect.y, rect.x, rect.height, rect.width, rect.rid
             
             total_items[rid]['packed'] += 1
@@ -157,7 +161,7 @@ if calc_btn:
             ax.text(x + w/2, y + h/2, f"{total_items[rid]['name']}\n{w}x{h}", 
                     ha='center', va='center', color='white', fontsize=8, fontweight='bold')
             
-        ax.set_title("裝載俯視圖 (左側為車頭，啟用完美對齊引擎)")
+        ax.set_title("裝載俯視圖 (左側為車頭，帶狀成排引擎)")
         ax.set_xlabel("車斗長度 (cm)")
         ax.set_ylabel("車斗寬度 (cm)")
         st.pyplot(fig)
