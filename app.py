@@ -67,7 +67,6 @@ st.subheader("🤖 AI 視覺自動抓帳 (Beta)")
 
 with st.expander("⚙️ 設定 AI 金鑰 (必填)"):
     api_key = st.text_input("輸入全新的 Gemini API Key", type="password")
-    st.markdown("[按此免費申請新的 Google Gemini API Key](https://aistudio.google.com/app/apikey)")
 
 upload_photo = st.file_uploader("📂 從相簿選取照片 (支援 jpg, png)", type=['jpg', 'jpeg', 'png'])
 st.markdown("<p style='text-align: center; color: gray;'>或</p>", unsafe_allow_html=True)
@@ -82,12 +81,8 @@ if photo_to_use:
         if st.button("✨ 讓 AI 幫我算幾箱！", type="primary", use_container_width=True):
             with st.spinner("AI 正在用極速辨識紙箱數量中..."):
                 try:
-                    # 圖片轉 base64
                     img_bytes = photo_to_use.getvalue()
                     base64_image = base64.b64encode(img_bytes).decode('utf-8')
-                    
-                    # 【關鍵修正】：使用 -latest 指定最新的模型版本
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={api_key}"
                     headers = {'Content-Type': 'application/json'}
                     prompt = "你是一個專業的物流理貨員。請看這張照片，幫我計算畫面中的紙箱或貨箱數量，並將它們大約分類為「大箱」、「中箱」、「小箱」。請嚴格只回傳以下 JSON 格式，不要包含任何其他文字或標記符號：{\"大箱\": 數量, \"中箱\": 數量, \"小箱\": 數量}"
                     
@@ -100,33 +95,46 @@ if photo_to_use:
                         }]
                     }
                     
-                    response = requests.post(url, headers=headers, json=payload)
-                    response_data = response.json()
+                    # 終極解法：自動備援陣列，確保絕對能找到模型
+                    models_to_try = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro-vision"]
+                    success = False
+                    error_msg = ""
                     
-                    if 'error' in response_data:
-                        st.error(f"API 錯誤: {response_data['error']['message']}")
-                    else:
-                        result_text = response_data['candidates'][0]['content']['parts'][0]['text']
-                        result_text = result_text.replace("```json", "").replace("```", "").strip()
+                    for model_name in models_to_try:
+                        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+                        response = requests.post(url, headers=headers, json=payload)
+                        response_data = response.json()
                         
-                        if not result_text.startswith("{"):
-                            start_idx = result_text.find("{")
-                            end_idx = result_text.rfind("}") + 1
-                            result_text = result_text[start_idx:end_idx]
+                        if 'error' not in response_data:
+                            result_text = response_data['candidates'][0]['content']['parts'][0]['text']
+                            result_text = result_text.replace("```json", "").replace("```", "").strip()
                             
-                        ai_counts = json.loads(result_text)
-                        
-                        for item in st.session_state['items']:
-                            if item['type'] == 'quick':
-                                if "大箱" in item['name']:
-                                    item['qty'] = ai_counts.get("大箱", 0)
-                                elif "中箱" in item['name']:
-                                    item['qty'] = ai_counts.get("中箱", 0)
-                                elif "小箱" in item['name']:
-                                    item['qty'] = ai_counts.get("小箱", 0)
-                                    
-                        st.success("✅ AI 辨識完成！數字已自動填入下方的「急件快速估算區」！")
+                            if not result_text.startswith("{"):
+                                start_idx = result_text.find("{")
+                                end_idx = result_text.rfind("}") + 1
+                                result_text = result_text[start_idx:end_idx]
+                                
+                            ai_counts = json.loads(result_text)
+                            
+                            for item in st.session_state['items']:
+                                if item['type'] == 'quick':
+                                    if "大箱" in item['name']:
+                                        item['qty'] = ai_counts.get("大箱", 0)
+                                    elif "中箱" in item['name']:
+                                        item['qty'] = ai_counts.get("中箱", 0)
+                                    elif "小箱" in item['name']:
+                                        item['qty'] = ai_counts.get("小箱", 0)
+                                        
+                            st.success(f"✅ 辨識成功！數字已自動填入下方的「急件快速估算區」！")
+                            success = True
+                            break
+                        else:
+                            error_msg = response_data['error']['message']
+                    
+                    if success:
                         st.rerun()
+                    else:
+                        st.error(f"API 拒絕連線，請確認金鑰是否有效。伺服器訊息: {error_msg}")
                         
                 except Exception as e:
                     st.error(f"辨識失敗，請重試。錯誤細節: {e}")
