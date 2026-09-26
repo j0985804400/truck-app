@@ -70,29 +70,11 @@ st.subheader("🤖 AI 視覺自動抓帳 (Beta)")
 with st.expander("⚙️ 設定 AI 金鑰"):
     api_key = st.text_input("輸入 Gemini API Key", type="password")
 
-# 加入上傳照片與現場拍照兩種選項
 upload_photo = st.file_uploader("📂 從相簿選取照片 (支援 jpg, png)", type=['jpg', 'jpeg', 'png'])
 st.markdown("<p style='text-align: center; color: gray;'>或</p>", unsafe_allow_html=True)
 camera_photo = st.camera_input("📸 開啟相機直接拍")
 
-# 判斷使用者用了哪一種方式給照片
 photo_to_use = upload_photo if upload_photo else camera_photo
 
 if photo_to_use:
-    if not api_key:
-        st.warning("⚠️ 請先在上方設定 API Key，才能啟用 AI 自動辨識功能。")
-    else:
-        if st.button("✨ 讓 AI 幫我算幾箱！", type="primary", use_container_width=True):
-            with st.spinner("AI 正在用極速辨識紙箱數量中..."):
-                try:
-                    genai.configure(api_key=api_key)
-                    img = Image.open(photo_to_use)
-                    
-                    prompt = '你是一個專業的物流理貨員。請看這張照片，幫我計算畫面中的紙箱或貨箱數量，並將它們大約分類為「大箱」、「中箱」、「小箱」。請嚴格只回傳以下 JSON 格式，不要包含任何其他文字或標記符號：{"大箱": 數量, "中箱": 數量, "小箱": 數量}'
-                    
-                    # 強制指定最新版模型，避免 404 錯誤
-                    model = genai.GenerativeModel('gemini-1.5-flash')
-                    response = model.generate_content([prompt, img])
-                            
-                    # 清理 AI 回傳的雜訊確保 JSON 格式正確
-                    result_text = response.text.replace('```json', '').replace('
+    if not
