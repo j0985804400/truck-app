@@ -1,5 +1,11 @@
 import streamlit as st
 import os
+import json
+try:
+    from PIL import Image
+    import google.generativeai as genai
+except ImportError:
+    pass # 避免尚未安裝套件時整個網頁崩潰
 
 def init_state():
     st.session_state['truck_l'] = 820
@@ -15,7 +21,7 @@ def init_state():
         {"name": "📦 快速小箱 (約同 EX2/WET)", "l": 65, "w": 60, "qty": 0, "priority": False, "required": False, "type": "quick"},
         
         # === 正規貨物清單 ===
-        {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": False, "required": False, "type": "regular"},
+        {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": True, "required": False, "type": "regular"},
         {"name": "LAM", "l": 75, "w": 116, "qty": 0, "priority": False, "required": False, "type": "regular"},
         {"name": "EX2", "l": 60, "w": 67, "qty": 0, "priority": False, "required": False, "type": "regular"},
         {"name": "EP2", "l": 119, "w": 67, "qty": 0, "priority": False, "required": False, "type": "regular"},
@@ -49,13 +55,64 @@ def reset_all():
         item['qty'] = 0
         item['required'] = False
 
-st.set_page_config(page_title="貨車裝箱計算器", layout="centered")
-st.title("📦 貨車裝箱計算器")
+st.set_page_config(page_title="貨車裝箱防爆計算器", layout="centered")
+st.title("📦 貨車裝箱防爆計算器")
 
 st.markdown(f"<p style='color: gray; margin-bottom: 5px;'>🚚 目前車斗規格：長 {st.session_state['truck_l']} cm × 寬 {st.session_state['truck_w']} cm</p>", unsafe_allow_html=True)
 
 r_id = st.session_state.get('reset_count', 0)
 truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
+
+# ==========================================
+# 📸 現場拍照 AI 自動估算區
+# ==========================================
+st.markdown("---")
+st.subheader("🤖 AI 視覺自動抓帳 (Beta)")
+
+with st.expander("⚙️ 設定 AI 金鑰 (首次使用需輸入)"):
+    api_key = st.text_input("輸入 Gemini API Key", type="password")
+    st.markdown("[按此免費申請 Google Gemini API Key](https://aistudio.google.com/app/apikey)")
+
+camera_photo = st.camera_input("開啟相機拍下散貨", label_visibility="collapsed")
+
+if camera_photo:
+    if not api_key:
+        st.warning("⚠️ 請先在上方設定 API Key，才能啟用 AI 自動辨識功能。")
+    else:
+        if st.button("✨ 讓 AI 幫我算幾箱！", type="primary", use_container_width=True):
+            with st.spinner("AI 正在用極速辨識紙箱數量中..."):
+                try:
+                    genai.configure(api_key=api_key)
+                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    img = Image.open(camera_photo)
+                    
+                    # 給 AI 的指令，要求它嚴格輸出 JSON 格式
+                    prompt = """
+                    你是一個專業的物流理貨員。請看這張照片，幫我計算畫面中的紙箱數量，並將它們大約分類為「大箱」、「中箱」、「小箱」。
+                    請嚴格只回傳以下 JSON 格式，不要包含任何其他文字或標記符號：
+                    {"大箱": 數量, "中箱": 數量, "小箱": 數量}
+                    """
+                    
+                    response = model.generate_content([prompt, img])
+                    result_text = response.text.replace("```json", "").replace("```", "").strip()
+                    
+                    # 解析 AI 回傳的數字
+                    ai_counts = json.loads(result_text)
+                    
+                    # 將數字自動填入 session_state
+                    for item in st.session_state['items']:
+                        if item['type'] == 'quick':
+                            if "大箱" in item['name']:
+                                item['qty'] = ai_counts.get("大箱", 0)
+                            elif "中箱" in item['name']:
+                                item['qty'] = ai_counts.get("中箱", 0)
+                            elif "小箱" in item['name']:
+                                item['qty'] = ai_counts.get("小箱", 0)
+                                
+                    st.success("✅ AI 辨識完成！數字已自動填入下方的「急件快速估算區」！")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"辨識失敗，請重試。錯誤訊息: {e}")
 
 # ==========================================
 # ⚡ 急件快速粗估區
@@ -68,7 +125,6 @@ for i, item in enumerate(st.session_state['items']):
         item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{i}_v{r_id}', label_visibility="collapsed")
         st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
 
-# ⚡ 快速估算區的獨立計量條
 quick_area = sum(item['l'] * item['w'] * item['qty'] for item in st.session_state['items'] if item['type'] == 'quick')
 quick_pct = (quick_area / truck_area) * 100 if truck_area > 0 else 0
 st.info(f"⚡ **快速估算佔用**：{quick_pct:.1f}%  (面積：{quick_area:,} cm²)")
@@ -99,7 +155,6 @@ for i, item in enumerate(st.session_state['items']):
 
 st.button("➕ 新增臨時貨物", on_click=add_temp_item, use_container_width=True)
 
-# 📍 精確品名區的獨立計量條
 regular_area = sum(item['l'] * item['w'] * item['qty'] for item in st.session_state['items'] if item['type'] != 'quick')
 regular_pct = (regular_area / truck_area) * 100 if truck_area > 0 else 0
 st.info(f"📍 **精確品名佔用**：{regular_pct:.1f}%  (面積：{regular_area:,} cm²)")
@@ -125,7 +180,6 @@ if total_pct > 100:
     
     st.markdown("### 💡 建議留車不上車清單：")
     
-    # 智慧篩選：完全排除「必要」貨物
     disposable_items = []
     for item in st.session_state['items']:
         if item['qty'] > 0 and not item.get('required', False):
