@@ -15,7 +15,7 @@ def init_state():
         {"name": "📦 快速小箱 (約同 EX2/WET)", "l": 65, "w": 60, "qty": 0, "priority": False, "required": False, "type": "quick"},
         
         # === 正規貨物清單 ===
-        {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": True, "required": False, "type": "regular"},
+        {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": False, "required": False, "type": "regular"},
         {"name": "LAM", "l": 75, "w": 116, "qty": 0, "priority": False, "required": False, "type": "regular"},
         {"name": "EX2", "l": 60, "w": 67, "qty": 0, "priority": False, "required": False, "type": "regular"},
         {"name": "EP2", "l": 119, "w": 67, "qty": 0, "priority": False, "required": False, "type": "regular"},
@@ -49,8 +49,8 @@ def reset_all():
         item['qty'] = 0
         item['required'] = False
 
-st.set_page_config(page_title="貨車裝箱防爆計算器", layout="centered")
-st.title("📦 貨車裝箱防爆計算器")
+st.set_page_config(page_title="貨車裝箱計算器", layout="centered")
+st.title("📦 貨車裝箱計算器")
 
 st.markdown(f"<p style='color: gray; margin-bottom: 5px;'>🚚 目前車斗規格：長 {st.session_state['truck_l']} cm × 寬 {st.session_state['truck_w']} cm</p>", unsafe_allow_html=True)
 
