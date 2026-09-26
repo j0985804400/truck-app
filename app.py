@@ -1,9 +1,5 @@
 import streamlit as st
 import os
-import json
-import base64
-import requests
-from PIL import Image
 
 def init_state():
     st.session_state['truck_l'] = 820
@@ -13,10 +9,12 @@ def init_state():
         st.session_state['reset_count'] = 0
     
     st.session_state['items'] = [
+        # === 快速粗估專區 ===
         {"name": "📦 快速大箱 (約同 DPS2/IOS大)", "l": 100, "w": 95, "qty": 0, "priority": False, "required": False, "type": "quick"},
         {"name": "📦 快速中箱 (約同 UCU/ETTN)", "l": 80, "w": 75, "qty": 0, "priority": False, "required": False, "type": "quick"},
         {"name": "📦 快速小箱 (約同 EX2/WET)", "l": 65, "w": 60, "qty": 0, "priority": False, "required": False, "type": "quick"},
         
+        # === 正規貨物清單 ===
         {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": True, "required": False, "type": "regular"},
         {"name": "LAM", "l": 75, "w": 116, "qty": 0, "priority": False, "required": False, "type": "regular"},
         {"name": "EX2", "l": 60, "w": 67, "qty": 0, "priority": False, "required": False, "type": "regular"},
@@ -58,86 +56,6 @@ st.markdown(f"<p style='color: gray; margin-bottom: 5px;'>🚚 目前車斗規�
 
 r_id = st.session_state.get('reset_count', 0)
 truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
-
-# ==========================================
-# 📸 現場拍照與相簿上傳 AI 自動估算區
-# ==========================================
-st.markdown("---")
-st.subheader("🤖 AI 視覺自動抓帳 (Beta)")
-
-with st.expander("⚙️ 設定 AI 金鑰 (必填)"):
-    api_key = st.text_input("輸入全新的 Gemini API Key", type="password")
-
-upload_photo = st.file_uploader("📂 從相簿選取照片 (支援 jpg, png)", type=['jpg', 'jpeg', 'png'])
-st.markdown("<p style='text-align: center; color: gray;'>或</p>", unsafe_allow_html=True)
-camera_photo = st.camera_input("📸 開啟相機直接拍")
-
-photo_to_use = upload_photo if upload_photo else camera_photo
-
-if photo_to_use:
-    if not api_key:
-        st.warning("⚠️ 請先在上方設定新的 API Key，才能啟用 AI 自動辨識功能。")
-    else:
-        if st.button("✨ 讓 AI 幫我算幾箱！", type="primary", use_container_width=True):
-            with st.spinner("AI 正在用極速辨識紙箱數量中..."):
-                try:
-                    img_bytes = photo_to_use.getvalue()
-                    base64_image = base64.b64encode(img_bytes).decode('utf-8')
-                    headers = {'Content-Type': 'application/json'}
-                    prompt = "你是一個專業的物流理貨員。請看這張照片，幫我計算畫面中的紙箱或貨箱數量，並將它們大約分類為「大箱」、「中箱」、「小箱」。請嚴格只回傳以下 JSON 格式，不要包含任何其他文字或標記符號：{\"大箱\": 數量, \"中箱\": 數量, \"小箱\": 數量}"
-                    
-                    payload = {
-                        "contents": [{
-                            "parts": [
-                                {"text": prompt},
-                                {"inline_data": {"mime_type": "image/jpeg", "data": base64_image}}
-                            ]
-                        }]
-                    }
-                    
-                    # 終極解法：自動備援陣列，確保絕對能找到模型
-                    models_to_try = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro-vision"]
-                    success = False
-                    error_msg = ""
-                    
-                    for model_name in models_to_try:
-                        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
-                        response = requests.post(url, headers=headers, json=payload)
-                        response_data = response.json()
-                        
-                        if 'error' not in response_data:
-                            result_text = response_data['candidates'][0]['content']['parts'][0]['text']
-                            result_text = result_text.replace("```json", "").replace("```", "").strip()
-                            
-                            if not result_text.startswith("{"):
-                                start_idx = result_text.find("{")
-                                end_idx = result_text.rfind("}") + 1
-                                result_text = result_text[start_idx:end_idx]
-                                
-                            ai_counts = json.loads(result_text)
-                            
-                            for item in st.session_state['items']:
-                                if item['type'] == 'quick':
-                                    if "大箱" in item['name']:
-                                        item['qty'] = ai_counts.get("大箱", 0)
-                                    elif "中箱" in item['name']:
-                                        item['qty'] = ai_counts.get("中箱", 0)
-                                    elif "小箱" in item['name']:
-                                        item['qty'] = ai_counts.get("小箱", 0)
-                                        
-                            st.success(f"✅ 辨識成功！數字已自動填入下方的「急件快速估算區」！")
-                            success = True
-                            break
-                        else:
-                            error_msg = response_data['error']['message']
-                    
-                    if success:
-                        st.rerun()
-                    else:
-                        st.error(f"API 拒絕連線，請確認金鑰是否有效。伺服器訊息: {error_msg}")
-                        
-                except Exception as e:
-                    st.error(f"辨識失敗，請重試。錯誤細節: {e}")
 
 # ==========================================
 # ⚡ 急件快速粗估區
