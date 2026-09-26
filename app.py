@@ -3,7 +3,7 @@ import os
 
 def init_state():
     st.session_state['truck_l'] = 820
-    st.session_state['truck_w'] = 240
+    st.session_state['truck_w'] = 243
     
     if 'reset_count' not in st.session_state:
         st.session_state['reset_count'] = 0
@@ -14,8 +14,8 @@ def init_state():
         {"name": "📦 快速中箱 (約同 UCU/ETTN)", "l": 80, "w": 75, "qty": 0, "priority": False, "required": False, "type": "quick"},
         {"name": "📦 快速小箱 (約同 EX2/WET)", "l": 65, "w": 60, "qty": 0, "priority": False, "required": False, "type": "quick"},
         
-        # === 更新後的正規貨物清單 ===
-        {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": False, "required": False, "type": "regular"},
+        # === 正規貨物清單 ===
+        {"name": "333", "l": 150, "w": 150, "qty": 0, "priority": True, "required": False, "type": "regular"},
         {"name": "LAM", "l": 75, "w": 116, "qty": 0, "priority": False, "required": False, "type": "regular"},
         {"name": "EX2", "l": 60, "w": 67, "qty": 0, "priority": False, "required": False, "type": "regular"},
         {"name": "EP2", "l": 119, "w": 67, "qty": 0, "priority": False, "required": False, "type": "regular"},
@@ -49,12 +49,13 @@ def reset_all():
         item['qty'] = 0
         item['required'] = False
 
-st.set_page_config(page_title="貨車裝箱計算器", layout="centered")
-st.title("📦 貨車裝箱計算器")
+st.set_page_config(page_title="貨車裝箱防爆計算器", layout="centered")
+st.title("📦 貨車裝箱防爆計算器")
 
 st.markdown(f"<p style='color: gray; margin-bottom: 5px;'>🚚 目前車斗規格：長 {st.session_state['truck_l']} cm × 寬 {st.session_state['truck_w']} cm</p>", unsafe_allow_html=True)
 
 r_id = st.session_state.get('reset_count', 0)
+truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
 
 # ==========================================
 # ⚡ 急件快速粗估區
@@ -63,12 +64,15 @@ st.markdown("---")
 st.subheader("⚡ 急件快速估算 (不挑品名)")
 for i, item in enumerate(st.session_state['items']):
     if item['type'] == 'quick':
-        col_info, col_qty = st.columns([6.5, 3.5])
-        with col_info:
-            st.markdown(f"<div style='margin-top: 8px; font-size: 0.95em;'><b>{item['name']}</b></div>", unsafe_allow_html=True)
-        with col_qty:
-            item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{i}_v{r_id}', label_visibility="collapsed")
-        st.markdown("<hr style='margin: 1px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
+        st.markdown(f"**{item['name']}**")
+        item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{i}_v{r_id}', label_visibility="collapsed")
+        st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
+
+# ⚡ 快速估算區的獨立計量條
+quick_area = sum(item['l'] * item['w'] * item['qty'] for item in st.session_state['items'] if item['type'] == 'quick')
+quick_pct = (quick_area / truck_area) * 100 if truck_area > 0 else 0
+st.info(f"⚡ **快速估算佔用**：{quick_pct:.1f}%  (面積：{quick_area:,} cm²)")
+st.progress(min(quick_pct / 100, 1.0))
 
 # ==========================================
 # 📥 精確品名設定區
@@ -77,20 +81,11 @@ st.markdown("<br>", unsafe_allow_html=True)
 st.subheader("📥 精確品名與數量設定")
 for i, item in enumerate(st.session_state['items']):
     if item['type'] != 'quick':
-        # 三個欄位：品名(5) | 數量(3.5) | 必要勾選(1.5)
-        col_info, col_qty, col_req = st.columns([5.0, 3.5, 1.5])
+        pri_text = "⭐ " if item.get("priority") else ""
+        label = f"{pri_text}**{item['name']}** *({item['l']}x{item['w']})*  🔒必要"
+        item['required'] = st.checkbox(label, value=item.get('required', False), key=f'req_{i}_v{r_id}')
         
-        with col_info:
-            req_icon = "🔒 " if item.get("required") else ""
-            pri_text = "⭐ " if item.get("priority") else ""
-            st.markdown(f"<div style='margin-top: 8px; font-size: 0.95em;'><b>{req_icon}{pri_text}{item['name']}</b> <span style='font-size:0.75em; color:gray;'>({item['l']}x{item['w']})</span></div>", unsafe_allow_html=True)
-        
-        with col_qty:
-            item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{i}_v{r_id}', label_visibility="collapsed")
-            
-        with col_req:
-            # 讓使用者可以勾選此項是否為「必要」
-            item['required'] = st.checkbox("必要", value=item.get('required', False), key=f'req_{i}_v{r_id}')
+        item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{i}_v{r_id}', label_visibility="collapsed")
         
         if item["type"] == "temp":
             with st.expander("✏️ 調整臨時貨物"):
@@ -100,28 +95,33 @@ for i, item in enumerate(st.session_state['items']):
                 item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f'edit_w_{i}_v{r_id}')
                 item['priority'] = st.checkbox("⭐ 優先放車頭", value=item['priority'], key=f'edit_pri_{i}_v{r_id}')
                 
-        st.markdown("<hr style='margin: 1px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
 
 st.button("➕ 新增臨時貨物", on_click=add_temp_item, use_container_width=True)
-st.markdown("<br>", unsafe_allow_html=True)
 
+# 📍 精確品名區的獨立計量條
+regular_area = sum(item['l'] * item['w'] * item['qty'] for item in st.session_state['items'] if item['type'] != 'quick')
+regular_pct = (regular_area / truck_area) * 100 if truck_area > 0 else 0
+st.info(f"📍 **精確品名佔用**：{regular_pct:.1f}%  (面積：{regular_area:,} cm²)")
+st.progress(min(regular_pct / 100, 1.0))
+
+st.markdown("<br>", unsafe_allow_html=True)
 if st.button("🔄 一鍵清空數量", type="secondary", use_container_width=True):
     reset_all()
     st.rerun()
 
 # ==========================================
-# 📊 佔用率計算與智慧建議 (置底)
+# 📊 總和裝載狀態與超載建議 (置底)
 # ==========================================
 st.markdown("---")
-st.subheader("📊 裝載狀態與超載建議")
+st.subheader("📊 總和裝載狀態與超載建議")
 
-truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
-total_item_area = sum(item['l'] * item['w'] * item['qty'] for item in st.session_state['items'])
-usage_pct = (total_item_area / truck_area) * 100 if truck_area > 0 else 0
+total_item_area = quick_area + regular_area
+total_pct = (total_item_area / truck_area) * 100 if truck_area > 0 else 0
 
-if usage_pct > 100:
+if total_pct > 100:
     excess_area = total_item_area - truck_area
-    st.error(f"🚨 **面積超載！** 目前超出約 **{excess_area:,} cm²** 空間！")
+    st.error(f"🚨 **整車面積超載！** 目前總計超出約 **{excess_area:,} cm²** 空間！")
     
     st.markdown("### 💡 建議留車不上車清單：")
     
@@ -136,7 +136,6 @@ if usage_pct > 100:
                 'priority': item['priority']
             })
             
-    # 優先從「非車頭優先」且「單件面積大」的貨物開始開刀
     disposable_items.sort(key=lambda x: (x['priority'], -x['single_area']))
     
     found_solution = False
@@ -157,23 +156,23 @@ if usage_pct > 100:
                     
     if temp_excess > 0:
         if found_solution:
-            st.error(f"⚠️ 拿掉上述非必要貨物後，仍超載 {temp_excess:,} cm²。請檢視「必要」貨物的數量！")
+            st.error(f"⚠️ 拿掉上述非必要貨物後，仍超載 {temp_excess:,} cm²。請檢視「必要」貨物與「快速估算」區的數量！")
         else:
             st.error("⚠️ 目前車上全都是「🔒必要貨物」，無法提供留車建議。請直接分車或協調必要清單！")
 
-elif usage_pct > 85:
-    st.warning(f"⚠️ **非常極限！** 面積佔用 {usage_pct:.1f}% (接近滿載，注意縫隙)")
-elif usage_pct > 0:
-    st.info(f"🟢 **空間安全**：目前佔用 {usage_pct:.1f}%，可順利出車！")
+elif total_pct > 85:
+    st.warning(f"⚠️ **整車非常極限！** 總面積佔用 {total_pct:.1f}% (接近滿載，注意縫隙)")
+elif total_pct > 0:
+    st.info(f"🟢 **整車空間安全**：總面積佔用 {total_pct:.1f}%，可順利出車！")
 else:
     st.info("🟢 **尚未使用**：目前佔用 0.0%")
 
-if usage_pct > 0:
-    st.progress(min(usage_pct / 100, 1.0))
+if total_pct > 0:
+    st.progress(min(total_pct / 100, 1.0))
 
 if total_item_area > 0:
     st.markdown("<br>", unsafe_allow_html=True)
-    st.subheader("📋 目前已選貨物統計")
+    st.subheader("📋 目前已選貨物總計")
     total_pieces = 0
     for item in st.session_state['items']:
         if item['qty'] > 0:
