@@ -49,10 +49,8 @@ def reset_all():
         item['qty'] = 0
         item['required'] = False
 
-st.set_page_config(page_title="貨車裝箱計算器", layout="centered")
-st.title("📦 貨車裝箱計算器")
-
-st.markdown(f"<p style='color: gray; margin-bottom: 5px;'>🚚 目前車斗規格：長 {st.session_state['truck_l']} cm × 寬 {st.session_state['truck_w']} cm</p>", unsafe_allow_html=True)
+st.set_page_config(page_title="貨車裝箱防爆計算器", layout="centered")
+st.title("📦 貨車裝箱防爆計算器")
 
 r_id = st.session_state.get('reset_count', 0)
 truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
@@ -60,7 +58,6 @@ truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
 # ==========================================
 # ⚡ 急件快速粗估區
 # ==========================================
-st.markdown("---")
 st.subheader("⚡ 急件快速估算 (不挑品名)")
 for i, item in enumerate(st.session_state['items']):
     if item['type'] == 'quick':
@@ -158,9 +155,9 @@ if total_pct > 100:
             st.error("⚠️ 目前車上全都是「🔒必要貨物」，無法提供留車建議。請直接分車或協調必要清單！")
 
 elif total_pct > 85:
-    st.warning(f"⚠️ **整車非常極限！** 總面積佔用 {total_pct:.1f}% (接近滿載，注意縫隙)")
+    st.warning(f"⚠️ **非常極限！** 總面積佔用 {total_pct:.1f}% (接近滿載，注意縫隙)")
 elif total_pct > 0:
-    st.info(f"🟢 **整車空間安全**：總面積佔用 {total_pct:.1f}%，可順利出車！")
+    st.info(f"🟢 **空間安全**：總面積佔用 {total_pct:.1f}%，可順利出車！")
 else:
     st.info("🟢 **尚未使用**：目前佔用 0.0%")
 
