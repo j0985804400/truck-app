@@ -49,8 +49,8 @@ def reset_all():
         item['qty'] = 0
         item['required'] = False
 
-st.set_page_config(page_title="貨車裝箱防爆計算器", layout="centered")
-st.title("📦 貨車裝箱防爆計算器")
+st.set_page_config(page_title="貨車裝箱計算器", layout="centered")
+st.title("📦 貨車裝箱計算器")
 
 r_id = st.session_state.get('reset_count', 0)
 truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
@@ -58,7 +58,7 @@ truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
 # ==========================================
 # ⚡ 急件快速粗估區
 # ==========================================
-st.subheader("⚡ 急件快速估算 (不挑品名)")
+st.subheader("⚡ 急件快速估算 ")
 for i, item in enumerate(st.session_state['items']):
     if item['type'] == 'quick':
         st.markdown(f"**{item['name']}**")
