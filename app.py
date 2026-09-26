@@ -1,11 +1,9 @@
 import streamlit as st
 import os
 import json
-try:
-    from PIL import Image
-    import google.generativeai as genai
-except ImportError:
-    pass 
+import base64
+import requests
+from PIL import Image
 
 def init_state():
     st.session_state['truck_l'] = 820
@@ -67,8 +65,8 @@ truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
 st.markdown("---")
 st.subheader("🤖 AI 視覺自動抓帳 (Beta)")
 
-with st.expander("⚙️ 設定 AI 金鑰"):
-    api_key = st.text_input("輸入 Gemini API Key", type="password")
+# 已將你的金鑰內建，移除輸入框
+API_KEY = "AQ.Ab8RN6JQD3Ro3yZH4eiGAXMG4BKSzRXm1tVmMjNdNo-cD9lQag"
 
 upload_photo = st.file_uploader("📂 從相簿選取照片 (支援 jpg, png)", type=['jpg', 'jpeg', 'png'])
 st.markdown("<p style='text-align: center; color: gray;'>或</p>", unsafe_allow_html=True)
@@ -77,25 +75,36 @@ camera_photo = st.camera_input("📸 開啟相機直接拍")
 photo_to_use = upload_photo if upload_photo else camera_photo
 
 if photo_to_use:
-    if api_key == "":
-        st.warning("⚠️ 請先在上方設定 API Key，才能啟用 AI 自動辨識功能。")
-    else:
-        if st.button("✨ 讓 AI 幫我算幾箱！", type="primary", use_container_width=True):
-            with st.spinner("AI 正在用極速辨識紙箱數量中..."):
-                try:
-                    genai.configure(api_key=api_key)
-                    img = Image.open(photo_to_use)
+    if st.button("✨ 讓 AI 幫我算幾箱！", type="primary", use_container_width=True):
+        with st.spinner("AI 正在用極速辨識紙箱數量中..."):
+            try:
+                # 終極解法：將圖片轉為 base64 直接發送網路請求，繞過老舊套件
+                img_bytes = photo_to_use.getvalue()
+                base64_image = base64.b64encode(img_bytes).decode('utf-8')
+                
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+                headers = {'Content-Type': 'application/json'}
+                prompt = "你是一個專業的物流理貨員。請看這張照片，幫我計算畫面中的紙箱或貨箱數量，並將它們大約分類為「大箱」、「中箱」、「小箱」。請嚴格只回傳以下 JSON 格式，不要包含任何其他文字或標記符號：{\"大箱\": 數量, \"中箱\": 數量, \"小箱\": 數量}"
+                
+                payload = {
+                    "contents": [{
+                        "parts": [
+                            {"text": prompt},
+                            {"inline_data": {"mime_type": "image/jpeg", "data": base64_image}}
+                        ]
+                    }]
+                }
+                
+                response = requests.post(url, headers=headers, json=payload)
+                response_data = response.json()
+                
+                if 'error' in response_data:
+                    st.error(f"API 錯誤: {response_data['error']['message']}")
+                else:
+                    result_text = response_data['candidates'][0]['content']['parts'][0]['text']
+                    result_text = result_text.replace("```json", "").replace("```", "").strip()
                     
-                    prompt = "你是一個專業的物流理貨員。請看這張照片，幫我計算畫面中的紙箱或貨箱數量，並將它們大約分類為「大箱」、「中箱」、「小箱」。請嚴格只回傳以下 JSON 格式，不要包含任何其他文字或標記符號：{\"大箱\": 數量, \"中箱\": 數量, \"小箱\": 數量}"
-                    
-                    model = genai.GenerativeModel("gemini-1.5-flash")
-                    response = model.generate_content([prompt, img])
-                            
-                    result_text = response.text.replace("```json", "")
-                    result_text = result_text.replace("```", "")
-                    result_text = result_text.strip()
-                    
-                    if result_text.startswith("{") == False:
+                    if not result_text.startswith("{"):
                         start_idx = result_text.find("{")
                         end_idx = result_text.rfind("}") + 1
                         result_text = result_text[start_idx:end_idx]
@@ -113,8 +122,9 @@ if photo_to_use:
                                 
                     st.success("✅ AI 辨識完成！數字已自動填入下方的「急件快速估算區」！")
                     st.rerun()
-                except Exception as e:
-                    st.error(f"辨識失敗，請重試或手動輸入。若持續報錯，請確認 requirements.txt 中的套件版本已更新。詳細錯誤: {e}")
+                    
+            except Exception as e:
+                st.error(f"辨識失敗，請重試或手動輸入。錯誤細節: {e}")
 
 # ==========================================
 # ⚡ 急件快速粗估區
