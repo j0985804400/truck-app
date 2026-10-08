@@ -71,31 +71,28 @@ for i, item in enumerate(st.session_state['items']):
 quick_ph = st.empty()
 
 # ==========================================
-# 📥 精確品名選擇與已選清單區
+# 📥 精確品名點選區 (改用按鈕清單，絕不跳鍵盤)
 # ==========================================
 st.markdown("<br>", unsafe_allow_html=True)
 st.subheader("📥 精確品名與數量設定")
+st.caption("點擊下方按鈕即可快速將該品項加入已選清單：")
 
 regular_items = [item for item in st.session_state['items'] if item['type'] in ['regular', 'temp']]
-regular_names = [item['name'] for item in regular_items]
 
-# 選擇新增
-c_sel, c_btn = st.columns([7, 3])
-with c_sel:
-    selected_name = st.selectbox("選擇貨物", options=regular_names, key=f"sel_item_{r_id}", label_visibility="collapsed")
-with c_btn:
-    if st.button("➕ 加入", use_container_width=True):
-        target = next((item for item in regular_items if item['name'] == selected_name), None)
-        if target:
-            target['qty'] += 1
+# 以 3 個按鈕一排排列品名，點擊直接數量 +1
+cols = st.cols(3) if hasattr(st, "cols") else st.columns(3)
+for i, item in enumerate(regular_items):
+    col = cols[i % 3]
+    with col:
+        if st.button(f"➕ {item['name']}", key=f"btn_add_{item['name']}_{r_id}", use_container_width=True):
+            item['qty'] += 1
 
 if st.button("➕ 新增臨時自訂貨物尺寸", on_click=add_temp_item, use_container_width=True):
     pass
 
 st.markdown("<br>", unsafe_allow_html=True)
-st.markdown("##### 📋 已點選加入的清單：")
+st.markdown("##### 📋 已點選加入的清單（可直接調整數量或取消）：")
 
-# 顯示目前數量 > 0 的精確品項（讓使用者可以直接修改數量或取消）
 selected_regular_active = [item for item in regular_items if item['qty'] > 0]
 
 if selected_regular_active:
@@ -122,7 +119,7 @@ if selected_regular_active:
                 
         st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
 else:
-    st.info("尚未加入任何精確品名貨物，請從上方下拉選單選擇後點擊加入。")
+    st.info("尚未加入任何精確品名貨物，請點選上方按鈕加入。")
 
 reg_ph = st.empty()
 
