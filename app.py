@@ -37,30 +37,4 @@ def init_state():
         {"name": "CUP", "l": 90, "w": 56, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"}
     ]
 
-if 'items' not in st.session_state:
-    init_state()
-
-def add_temp_item():
-    st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "stacked_qty": 0, "priority": False, "skip": False, "type": "temp"})
-
-def reset_all():
-    st.session_state['reset_count'] += 1
-    for item in st.session_state['items']:
-        item['qty'] = 0
-        item['stacked_qty'] = 0
-        item['skip'] = False
-
-st.set_page_config(page_title="貨車裝箱計算器", layout="centered")
-st.title("📦 貨車裝箱計算器")
-
-r_id = st.session_state.get('reset_count', 0)
-truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
-
-# ==========================================
-# ⚡ 急件快速粗估區
-# ==========================================
-st.subheader("⚡ 急件快速估算 (不挑品名)")
-for i, item in enumerate(st.session_state['items']):
-    if item['type'] == 'quick':
-        st.markdown(f"**{item['name']}**")
-        item['qty'] = st.number_input("數量", value=item['qty'],
+if 'items' not in st.
