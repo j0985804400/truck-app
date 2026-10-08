@@ -65,7 +65,6 @@ for i, item in enumerate(st.session_state['items']):
         item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{i}_v{r_id}', label_visibility="collapsed")
         st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
 
-# 預留上方進度條的位置
 quick_ph = st.empty()
 
 # ==========================================
@@ -76,11 +75,11 @@ st.subheader("📥 精確品名與數量設定")
 for i, item in enumerate(st.session_state['items']):
     if item['type'] != 'quick':
         
-        # 左右分欄：左邊品名，右邊不上車勾選框
-        c_lbl, c_chk = st.columns([7, 3])
-        with c_lbl:
-            st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b> <span style='color: #aaa; font-size: 0.9em;'>({item['l']}x{item['w']})</span></div>", unsafe_allow_html=True)
-        with c_chk:
+        # 使用 HTML 齊頭尾佈局：左邊品名、右邊不上車勾選，絕對不換行
+        c_l, c_r = st.columns([6, 4])
+        with c_l:
+            st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b> <span style='color: #aaa; font-size: 0.85em;'>({item['l']}x{item['w']})</span></div>", unsafe_allow_html=True)
+        with c_r:
             item['skip'] = st.checkbox("🚫不上車", value=item.get('skip', False), key=f'skip_{i}_v{r_id}')
         
         # 數量輸入框獨立一行
@@ -97,7 +96,6 @@ for i, item in enumerate(st.session_state['items']):
 
 st.button("➕ 新增臨時貨物", on_click=add_temp_item, use_container_width=True)
 
-# 預留上方進度條的位置
 reg_ph = st.empty()
 
 st.markdown("<br>", unsafe_allow_html=True)
