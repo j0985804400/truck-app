@@ -6,9 +6,6 @@ def init_state():
     
     if 'reset_count' not in st.session_state:
         st.session_state['reset_count'] = 0
-        
-    if 'selected_regular_item' not in st.session_state:
-        st.session_state['selected_regular_item'] = "333"
     
     st.session_state['items'] = [
         # === 快速粗估專區 ===
@@ -74,31 +71,58 @@ for i, item in enumerate(st.session_state['items']):
 quick_ph = st.empty()
 
 # ==========================================
-# 📥 精確品名選擇與數量設定區 (下拉選單模式)
+# 📥 精確品名選擇與已選清單區
 # ==========================================
 st.markdown("<br>", unsafe_allow_html=True)
 st.subheader("📥 精確品名與數量設定")
 
-# 找出所有正規與臨時品名
 regular_items = [item for item in st.session_state['items'] if item['type'] in ['regular', 'temp']]
 regular_names = [item['name'] for item in regular_items]
 
-# 下拉選單選擇品名
-selected_name = st.selectbox("選擇要加入的精確貨物：", options=regular_names, key=f"sel_item_{r_id}")
+# 選擇新增
+c_sel, c_btn = st.columns([7, 3])
+with c_sel:
+    selected_name = st.selectbox("選擇貨物", options=regular_names, key=f"sel_item_{r_id}", label_visibility="collapsed")
+with c_btn:
+    if st.button("➕ 加入", use_container_width=True):
+        target = next((item for item in regular_items if item['name'] == selected_name), None)
+        if target:
+            target['qty'] += 1
 
-# 找到對應的品項物件
-target_item = next((item for item in regular_items if item['name'] == selected_name), None)
-
-if target_item:
-    # 顯示尺寸提示
-    st.caption(f"📏 尺寸：長 {target_item['l']} × 寬 {target_item['w']} cm")
-    
-    # 數量輸入
-    idx = st.session_state['items'].index(target_item)
-    target_item['qty'] = st.number_input("設定數量", value=target_item['qty'], min_value=0, step=1, key=f'qty_sel_{idx}_v{r_id}')
-
-if st.button("➕ 新增臨時自訂貨物", on_click=add_temp_item, use_container_width=True):
+if st.button("➕ 新增臨時自訂貨物尺寸", on_click=add_temp_item, use_container_width=True):
     pass
+
+st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("##### 📋 已點選加入的清單：")
+
+# 顯示目前數量 > 0 的精確品項（讓使用者可以直接修改數量或取消）
+selected_regular_active = [item for item in regular_items if item['qty'] > 0]
+
+if selected_regular_active:
+    for item in selected_regular_active:
+        idx = st.session_state['items'].index(item)
+        c_info, c_qty, c_del = st.columns([5, 3, 2])
+        with c_info:
+            st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b><br><span style='color:#aaa; font-size:0.8em;'>({item['l']}x{item['w']}cm)</span></div>", unsafe_allow_html=True)
+        with c_qty:
+            item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'active_qty_{idx}_v{r_id}', label_visibility="collapsed")
+        with c_del:
+            if st.button("❌ 取消", key=f'del_{idx}_v{r_id}'):
+                item['qty'] = 0
+                item['stacked_qty'] = 0
+                item['skip'] = False
+                st.rerun()
+                
+        if item["type"] == "temp":
+            with st.expander("✏️ 調整此臨時貨物尺寸"):
+                item['name'] = st.text_input("品名", value=item['name'], key=f'edit_name_{idx}_v{r_id}')
+                c1, c2 = st.columns(2)
+                item['l'] = c1.number_input("長(cm)", value=item['l'], min_value=1, step=5, key=f'edit_l_{idx}_v{r_id}')
+                item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f'edit_w_{idx}_v{r_id}')
+                
+        st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
+else:
+    st.info("尚未加入任何精確品名貨物，請從上方下拉選單選擇後點擊加入。")
 
 reg_ph = st.empty()
 
@@ -108,7 +132,7 @@ if st.button("🔄 一鍵清空數量", type="secondary", use_container_width=Tr
     st.rerun()
 
 # ==========================================
-# 📦 已選貨物裝載設定區 (集中管理：不上車勾選 + 疊上層數設定)
+# 📦 已選貨物裝載設定區 (不上車勾選 + 疊上層數設定)
 # ==========================================
 st.markdown("---")
 st.subheader("📦 已選貨物裝載設定 (不上車與疊層)")
@@ -138,7 +162,7 @@ if active_items:
             )
         st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px dashed #444;'>", unsafe_allow_html=True)
 else:
-    st.info("請先在上方輸入要載的貨物數量。")
+    st.info("請先在上方新增或輸入要載的貨物數量。")
 
 # ==========================================
 # 算面積並更新上方的進度條 (透過 st.empty)
