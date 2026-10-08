@@ -6,6 +6,9 @@ def init_state():
     
     if 'reset_count' not in st.session_state:
         st.session_state['reset_count'] = 0
+        
+    if 'selected_regular_item' not in st.session_state:
+        st.session_state['selected_regular_item'] = "333"
     
     st.session_state['items'] = [
         # === 快速粗估專區 ===
@@ -71,28 +74,31 @@ for i, item in enumerate(st.session_state['items']):
 quick_ph = st.empty()
 
 # ==========================================
-# 📥 精確品名與數量設定區 (改為精簡左右對應)
+# 📥 精確品名選擇與數量設定區 (下拉選單模式)
 # ==========================================
 st.markdown("<br>", unsafe_allow_html=True)
 st.subheader("📥 精確品名與數量設定")
-for i, item in enumerate(st.session_state['items']):
-    if item['type'] != 'quick':
-        c_name, c_qty = st.columns([6, 4])
-        with c_name:
-            st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b> <span style='color: #aaa; font-size: 0.8em;'>({item['l']}x{item['w']})</span></div>", unsafe_allow_html=True)
-        with c_qty:
-            item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{i}_v{r_id}', label_visibility="collapsed")
-        
-        if item["type"] == "temp":
-            with st.expander("✏️ 調整臨時貨物尺寸"):
-                item['name'] = st.text_input("品名", value=item['name'], key=f'edit_name_{i}_v{r_id}')
-                c1, c2 = st.columns(2)
-                item['l'] = c1.number_input("長(cm)", value=item['l'], min_value=1, step=5, key=f'edit_l_{i}_v{r_id}')
-                item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f'edit_w_{i}_v{r_id}')
-                
-        st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
 
-st.button("➕ 新增臨時貨物", on_click=add_temp_item, use_container_width=True)
+# 找出所有正規與臨時品名
+regular_items = [item for item in st.session_state['items'] if item['type'] in ['regular', 'temp']]
+regular_names = [item['name'] for item in regular_items]
+
+# 下拉選單選擇品名
+selected_name = st.selectbox("選擇要加入的精確貨物：", options=regular_names, key=f"sel_item_{r_id}")
+
+# 找到對應的品項物件
+target_item = next((item for item in regular_items if item['name'] == selected_name), None)
+
+if target_item:
+    # 顯示尺寸提示
+    st.caption(f"📏 尺寸：長 {target_item['l']} × 寬 {target_item['w']} cm")
+    
+    # 數量輸入
+    idx = st.session_state['items'].index(target_item)
+    target_item['qty'] = st.number_input("設定數量", value=target_item['qty'], min_value=0, step=1, key=f'qty_sel_{idx}_v{r_id}')
+
+if st.button("➕ 新增臨時自訂貨物", on_click=add_temp_item, use_container_width=True):
+    pass
 
 reg_ph = st.empty()
 
@@ -106,7 +112,7 @@ if st.button("🔄 一鍵清空數量", type="secondary", use_container_width=Tr
 # ==========================================
 st.markdown("---")
 st.subheader("📦 已選貨物裝載設定 (不上車與疊層)")
-st.caption("在此統一勾選不上車，或設定疊在上層的件數。")
+st.caption("在此統一管理已選貨物的不上車狀態，或設定疊在上層的件數。")
 
 active_items = [item for item in st.session_state['items'] if item['qty'] > 0]
 
