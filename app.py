@@ -1,5 +1,4 @@
 import streamlit as st
-import os
 
 def init_state():
     st.session_state['truck_l'] = 820
@@ -10,38 +9,38 @@ def init_state():
     
     st.session_state['items'] = [
         # === 快速粗估專區 ===
-        {"name": "📦 快速大箱 (約同 DPS2/IOS大)", "l": 100, "w": 95, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "quick"},
-        {"name": "📦 快速中箱 (約同 UCU/ETTN)", "l": 80, "w": 75, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "quick"},
-        {"name": "📦 快速小箱 (約同 EX2/WET)", "l": 65, "w": 60, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "quick"},
+        {"name": "📦 快速大箱 (約同 DPS2/IOS大)", "l": 100, "w": 95, "qty": 0, "stacked_qty": 0, "skip": False, "type": "quick"},
+        {"name": "📦 快速中箱 (約同 UCU/ETTN)", "l": 80, "w": 75, "qty": 0, "stacked_qty": 0, "skip": False, "type": "quick"},
+        {"name": "📦 快速小箱 (約同 EX2/WET)", "l": 65, "w": 60, "qty": 0, "stacked_qty": 0, "skip": False, "type": "quick"},
         
         # === 正規貨物清單 ===
-        {"name": "333", "l": 150, "w": 150, "qty": 0, "stacked_qty": 0, "priority": True, "skip": False, "type": "regular"},
-        {"name": "LAM", "l": 75, "w": 116, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "EX2", "l": 60, "w": 67, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "EP2", "l": 119, "w": 67, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "WET", "l": 62, "w": 78, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "WET長箱", "l": 102, "w": 52, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "ETTN", "l": 65, "w": 95, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "DPS2", "l": 80, "w": 126, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "DPS2小", "l": 53, "w": 104, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "UCU", "l": 61, "w": 106, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "ICP", "l": 82, "w": 82, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "APC", "l": 63, "w": 63, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "IOS大", "l": 122, "w": 80, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "IOS小", "l": 102, "w": 80, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "爐管方型", "l": 70, "w": 70, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "BJM", "l": 66, "w": 125, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "辛巳大", "l": 76, "w": 56, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "辛巳小", "l": 70, "w": 46, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "SDRM", "l": 67, "w": 56, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "CUP", "l": 90, "w": 56, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"}
+        {"name": "333", "l": 150, "w": 150, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "LAM", "l": 75, "w": 116, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "EX2", "l": 60, "w": 67, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "EP2", "l": 119, "w": 67, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "WET", "l": 62, "w": 78, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "WET長箱", "l": 102, "w": 52, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "ETTN", "l": 65, "w": 95, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "DPS2", "l": 80, "w": 126, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "DPS2小", "l": 53, "w": 104, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "UCU", "l": 61, "w": 106, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "ICP", "l": 82, "w": 82, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "APC", "l": 63, "w": 63, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "IOS大", "l": 122, "w": 80, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "IOS小", "l": 102, "w": 80, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "爐管方型", "l": 70, "w": 70, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "BJM", "l": 66, "w": 125, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "辛巳大", "l": 76, "w": 56, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "辛巳小", "l": 70, "w": 46, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "SDRM", "l": 67, "w": 56, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
+        {"name": "CUP", "l": 90, "w": 56, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"}
     ]
 
 if 'items' not in st.session_state:
     init_state()
 
 def add_temp_item():
-    st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "stacked_qty": 0, "priority": False, "skip": False, "type": "temp"})
+    st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "stacked_qty": 0, "skip": False, "type": "temp"})
 
 def reset_all():
     st.session_state['reset_count'] += 1
@@ -76,11 +75,10 @@ st.markdown("<br>", unsafe_allow_html=True)
 st.subheader("📥 精確品名與數量設定")
 for i, item in enumerate(st.session_state['items']):
     if item['type'] != 'quick':
-        pri_text = "⭐ " if item.get("priority") else ""
         
-        # --- 終極防折行：直接把品名寫在勾選框裡 ---
+        # --- 終極防折行：直接把品名寫在勾選框裡 (已移除優先星號) ---
         item['skip'] = st.checkbox(
-            f"🚫不上車 ｜ {pri_text}**{item['name']}** *({item['l']}x{item['w']})*", 
+            f"🚫不上車 ｜ **{item['name']}** *({item['l']}x{item['w']})*", 
             value=item.get('skip', False), 
             key=f'skip_{i}_v{r_id}'
         )
@@ -94,7 +92,6 @@ for i, item in enumerate(st.session_state['items']):
                 c1, c2 = st.columns(2)
                 item['l'] = c1.number_input("長(cm)", value=item['l'], min_value=1, step=5, key=f'edit_l_{i}_v{r_id}')
                 item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f'edit_w_{i}_v{r_id}')
-                item['priority'] = st.checkbox("⭐ 優先放車頭", value=item['priority'], key=f'edit_pri_{i}_v{r_id}')
                 
         st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
 
@@ -189,11 +186,11 @@ if total_pct > 100:
                 disposable_items.append({
                     'name': item['name'],
                     'single_area': single_area,
-                    'max_qty': floor_qty,
-                    'priority': item.get('priority', False)
+                    'max_qty': floor_qty
                 })
             
-    disposable_items.sort(key=lambda x: (x['priority'], -x['single_area']))
+    # 只根據單件佔地面積從大到小排序
+    disposable_items.sort(key=lambda x: -x['single_area'])
     
     found_solution = False
     temp_excess = excess_area
@@ -204,8 +201,7 @@ if total_pct > 100:
             drop_qty = min(needed_drop, item['max_qty'])
             
             if drop_qty > 0:
-                star = " ⭐(雖優先但體積大)" if item['priority'] else ""
-                st.warning(f"👉 建議拿掉 **{item['name']}** × {drop_qty} 件{star}")
+                st.warning(f"👉 建議拿掉 **{item['name']}** × {drop_qty} 件")
                 temp_excess -= item['single_area'] * drop_qty
                 found_solution = True
                 if temp_excess <= 0:
