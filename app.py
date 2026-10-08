@@ -3,7 +3,7 @@ import os
 
 def init_state():
     st.session_state['truck_l'] = 820
-    st.session_state['truck_w'] = 243
+    st.session_state['truck_w'] = 240
     
     if 'reset_count' not in st.session_state:
         st.session_state['reset_count'] = 0
@@ -53,8 +53,8 @@ def reset_all():
         item['qty'] = 0
         item['skip'] = False
 
-st.set_page_config(page_title="貨車裝箱防爆計算器", layout="centered")
-st.title("📦 貨車裝箱防爆計算器")
+st.set_page_config(page_title="貨車裝箱計算器", layout="centered")
+st.title("📦 貨車裝箱計算器")
 
 r_id = st.session_state.get('reset_count', 0)
 truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
