@@ -68,21 +68,13 @@ for i, item in enumerate(st.session_state['items']):
 quick_ph = st.empty()
 
 # ==========================================
-# 📥 精確品名設定區
+# 📥 精確品名與數量設定區 (極簡化：只有品名與數量)
 # ==========================================
 st.markdown("<br>", unsafe_allow_html=True)
 st.subheader("📥 精確品名與數量設定")
 for i, item in enumerate(st.session_state['items']):
     if item['type'] != 'quick':
-        
-        # 使用 HTML 齊頭尾佈局：左邊品名、右邊不上車勾選，絕對不換行
-        c_l, c_r = st.columns([6, 4])
-        with c_l:
-            st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b> <span style='color: #aaa; font-size: 0.85em;'>({item['l']}x{item['w']})</span></div>", unsafe_allow_html=True)
-        with c_r:
-            item['skip'] = st.checkbox("🚫不上車", value=item.get('skip', False), key=f'skip_{i}_v{r_id}')
-        
-        # 數量輸入框獨立一行
+        st.markdown(f"**{item['name']}** <span style='color: #aaa; font-size: 0.85em;'>({item['l']}x{item['w']})</span>", unsafe_allow_html=True)
         item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{i}_v{r_id}', label_visibility="collapsed")
         
         if item["type"] == "temp":
@@ -104,22 +96,24 @@ if st.button("🔄 一鍵清空數量", type="secondary", use_container_width=Tr
     st.rerun()
 
 # ==========================================
-# 📦 統一堆疊設定區 (只顯示已選且要上車的貨物)
+# 📦 已選貨物裝載設定區 (集中管理：不上車勾選 + 疊上層數設定)
 # ==========================================
 st.markdown("---")
-st.subheader("📦 已選貨物堆疊設定")
-st.caption("設定疊在上層的件數，系統將自動從車斗佔用面積中扣除。")
+st.subheader("📦 已選貨物裝載設定 (不上車與疊層)")
+st.caption("在此統一勾選不上車，或設定疊在上層的件數。")
 
-active_items = [item for item in st.session_state['items'] if item['qty'] > 0 and not item.get('skip', False)]
+active_items = [item for item in st.session_state['items'] if item['qty'] > 0]
 
 if active_items:
     for i, item in enumerate(active_items):
         if item.get('stacked_qty', 0) > item['qty']:
             item['stacked_qty'] = item['qty']
             
-        c_name, c_stack = st.columns([5, 5])
+        c_name, c_skip, c_stack = st.columns([4, 3, 3])
         with c_name:
-            st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b> (共 {item['qty']} 件)</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b><br><span style='color:#aaa; font-size:0.8em;'>({item['qty']}件)</span></div>", unsafe_allow_html=True)
+        with c_skip:
+            item['skip'] = st.checkbox("🚫不上車", value=item.get('skip', False), key=f'skip_ctrl_{item["name"]}_{i}_{r_id}')
         with c_stack:
             item['stacked_qty'] = st.number_input(
                 "疊上層數", 
@@ -127,7 +121,7 @@ if active_items:
                 min_value=0, 
                 max_value=item['qty'], 
                 step=1, 
-                key=f"stack_{item['name']}_{i}_{r_id}",
+                key=f"stack_ctrl_{item['name']}_{i}_{r_id}",
                 label_visibility="collapsed"
             )
         st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px dashed #444;'>", unsafe_allow_html=True)
