@@ -78,14 +78,14 @@ for i, item in enumerate(st.session_state['items']):
     if item['type'] != 'quick':
         pri_text = "⭐ " if item.get("priority") else ""
         
-        # --- 改變排版：品名跟不上車同一排 ---
-        c_name, c_skip = st.columns([7, 3])
-        with c_name:
-            st.markdown(f"<div style='margin-top: 6px;'>{pri_text}<b>{item['name']}</b> <i>({item['l']}x{item['w']})</i></div>", unsafe_allow_html=True)
-        with c_skip:
-            item['skip'] = st.checkbox("🚫不上車", value=item.get('skip', False), key=f'skip_{i}_v{r_id}')
+        # --- 終極防折行：直接把品名寫在勾選框裡 ---
+        item['skip'] = st.checkbox(
+            f"🚫不上車 ｜ {pri_text}**{item['name']}** *({item['l']}x{item['w']})*", 
+            value=item.get('skip', False), 
+            key=f'skip_{i}_v{r_id}'
+        )
         
-        # 數量輸入框獨立一行，畫面緊湊不折行
+        # 數量輸入框獨立一行
         item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{i}_v{r_id}', label_visibility="collapsed")
         
         if item["type"] == "temp":
@@ -119,7 +119,6 @@ active_items = [item for item in st.session_state['items'] if item['qty'] > 0 an
 
 if active_items:
     for i, item in enumerate(active_items):
-        # 防呆：避免上層數量超過總數量
         if item.get('stacked_qty', 0) > item['qty']:
             item['stacked_qty'] = item['qty']
             
@@ -185,7 +184,7 @@ if total_pct > 100:
     for item in st.session_state['items']:
         if item['qty'] > 0 and not item.get('skip', False):
             floor_qty = item['qty'] - item.get('stacked_qty', 0)
-            if floor_qty > 0:  # 只針對有落地佔空間的貨物給予留車建議
+            if floor_qty > 0:  
                 single_area = item['l'] * item['w']
                 disposable_items.append({
                     'name': item['name'],
