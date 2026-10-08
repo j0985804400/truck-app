@@ -34,13 +34,4 @@ def init_state():
         {"name": "辛巳大", "l": 76, "w": 56, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
         {"name": "辛巳小", "l": 70, "w": 46, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
         {"name": "SDRM", "l": 67, "w": 56, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "CUP", "l": 90, "w": 56, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"}
-    ]
-
-if 'items' not in st.session_state:
-    init_state()
-
-def add_temp_item():
-    st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "stacked_qty": 0, "priority": False, "skip": False, "type": "temp"})
-
-def reset_
+        {"name": "CUP", "l": 90, "w": 56, "qty": 0, "stacked_qty":
