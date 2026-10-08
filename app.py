@@ -29,4 +29,18 @@ def init_state():
         {"name": "APC", "l": 63, "w": 63, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
         {"name": "IOS大", "l": 122, "w": 80, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
         {"name": "IOS小", "l": 102, "w": 80, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
-        {"name": "爐管方型", "l": 70, "w": 70, "qty": 0, "stacked_qty": 0,
+        {"name": "爐管方型", "l": 70, "w": 70, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
+        {"name": "BJM", "l": 66, "w": 125, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
+        {"name": "辛巳大", "l": 76, "w": 56, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
+        {"name": "辛巳小", "l": 70, "w": 46, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
+        {"name": "SDRM", "l": 67, "w": 56, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"},
+        {"name": "CUP", "l": 90, "w": 56, "qty": 0, "stacked_qty": 0, "priority": False, "skip": False, "type": "regular"}
+    ]
+
+if 'items' not in st.session_state:
+    init_state()
+
+def add_temp_item():
+    st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "stacked_qty": 0, "priority": False, "skip": False, "type": "temp"})
+
+def reset_
