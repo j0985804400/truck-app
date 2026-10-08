@@ -6,15 +6,12 @@ def init_state():
     
     if 'reset_count' not in st.session_state:
         st.session_state['reset_count'] = 0
-        
-    if 'selected_regular_item' not in st.session_state:
-        st.session_state['selected_regular_item'] = None
     
     st.session_state['items'] = [
         # === 快速粗估專區 ===
-        {"name": "📦 快速大箱 (約同 DPS2/IOS大)", "l": 100, "w": 95, "qty": 0, "stacked_qty": 0, "skip": False, "type": "quick"},
-        {"name": "📦 快速中箱 (約同 UCU/ETTN)", "l": 80, "w": 75, "qty": 0, "stacked_qty": 0, "skip": False, "type": "quick"},
-        {"name": "📦 快速小箱 (約同 EX2/WET)", "l": 65, "w": 60, "qty": 0, "stacked_qty": 0, "skip": False, "type": "quick"},
+        {"name": "📦 快速大箱", "l": 100, "w": 95, "qty": 0, "stacked_qty": 0, "skip": False, "type": "quick"},
+        {"name": "📦 快速中箱", "l": 80, "w": 75, "qty": 0, "stacked_qty": 0, "skip": False, "type": "quick"},
+        {"name": "📦 快速小箱", "l": 65, "w": 60, "qty": 0, "stacked_qty": 0, "skip": False, "type": "quick"},
         
         # === 正規貨物清單 ===
         {"name": "333", "l": 150, "w": 150, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
@@ -59,43 +56,58 @@ r_id = st.session_state.get('reset_count', 0)
 truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
 
 # ==========================================
-# ⚡ 急件快速粗估區
+# ⚡ 急件快速估算區 (改用 Pills 按鈕點選)
 # ==========================================
-st.subheader("⚡ 急件快速估算 (不挑品名)")
-for i, item in enumerate(st.session_state['items']):
-    if item['type'] == 'quick':
-        c_name, c_qty = st.columns([6, 4])
-        with c_name:
+st.subheader("⚡ 急件快速估算")
+quick_items = [item for item in st.session_state['items'] if item['type'] == 'quick']
+quick_names = [item['name'] for item in quick_items]
+
+selected_quick = st.pills("快速估算選擇", options=quick_names, key=f"pills_quick_{r_id}", label_visibility="collapsed")
+if selected_quick:
+    target = next((item for item in quick_items if item['name'] == selected_quick), None)
+    if target:
+        target['qty'] += 1
+
+# 顯示已選的快速箱清單
+quick_active = [item for item in quick_items if item['qty'] > 0]
+if quick_active:
+    for item in quick_active:
+        idx = st.session_state['items'].index(item)
+        c_info, c_qty, c_del = st.columns([5, 3, 2])
+        with c_info:
             st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b></div>", unsafe_allow_html=True)
         with c_qty:
-            item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{i}_v{r_id}', label_visibility="collapsed")
+            item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'quick_qty_{idx}_v{r_id}', label_visibility="collapsed")
+        with c_del:
+            if st.button("❌ 取消", key=f'quick_del_{idx}_v{r_id}'):
+                item['qty'] = 0
+                item['stacked_qty'] = 0
+                item['skip'] = False
+                st.rerun()
         st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
 
 quick_ph = st.empty()
 
 # ==========================================
-# 📥 精確品名選擇與已選清單區 (改用絕對不跳鍵盤的 Pills 選擇器)
+# 📥 精確品名選擇與已選清單區
 # ==========================================
 st.markdown("<br>", unsafe_allow_html=True)
 st.subheader("📥 精確品名與數量設定")
-st.caption("點擊下方貨物名稱即可直接加入已選清單（絕不跳出鍵盤）：")
 
 regular_items = [item for item in st.session_state['items'] if item['type'] in ['regular', 'temp']]
 regular_names = [item['name'] for item in regular_items]
 
-# 使用 st.pills (如果版本支援) 或用橫向按鈕，完全避開 input 鍵盤
-selected_pill = st.pills("選擇欲加入的品名", options=regular_names, key=f"pills_item_{r_id}", label_visibility="collapsed")
+selected_pill = st.pills("精確品名選擇", options=regular_names, key=f"pills_item_{r_id}", label_visibility="collapsed")
 
 if selected_pill:
     target = next((item for item in regular_items if item['name'] == selected_pill), None)
-    if target and target['qty'] == 0:
-        target['qty'] = 1  # 點擊 Pills 時自動設為 1 件並跳出來
+    if target:
+        target['qty'] += 1
 
-if st.button("➕ 新增臨時自訂貨物尺寸", on_click=add_temp_item, use_container_width=True):
+if st.button("➕ 新增臨時自訂貨物", on_click=add_temp_item, use_container_width=True):
     pass
 
 st.markdown("<br>", unsafe_allow_html=True)
-st.markdown("##### 📋 已點選加入的清單：")
 
 selected_regular_active = [item for item in regular_items if item['qty'] > 0]
 
@@ -122,8 +134,6 @@ if selected_regular_active:
                 item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f'edit_w_{idx}_v{r_id}')
                 
         st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
-else:
-    st.info("尚未加入任何精確品名貨物，請從上方點選加入。")
 
 reg_ph = st.empty()
 
@@ -136,8 +146,7 @@ if st.button("🔄 一鍵清空數量", type="secondary", use_container_width=Tr
 # 📦 已選貨物裝載設定區 (不上車勾選 + 疊上層數設定)
 # ==========================================
 st.markdown("---")
-st.subheader("📦 已選貨物裝載設定 (不上車與疊層)")
-st.caption("在此統一管理已選貨物的不上車狀態，或設定疊在上層的件數。")
+st.subheader("📦 已選貨物裝載設定")
 
 active_items = [item for item in st.session_state['items'] if item['qty'] > 0]
 
@@ -163,7 +172,7 @@ if active_items:
             )
         st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px dashed #444;'>", unsafe_allow_html=True)
 else:
-    st.info("請先在上方新增或輸入要載的貨物數量。")
+    st.info("請先在上方新增或點選要載的貨物。")
 
 # ==========================================
 # 算面積並更新上方的進度條 (透過 st.empty)
