@@ -40,7 +40,7 @@ if 'items' not in st.session_state:
     init_state()
 
 def add_temp_item():
-    st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "stacked_qty": 0, "skip": False, "type": "temp"})
+    st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 0, "stacked_qty": 0, "skip": False, "type": "temp"})
 
 def reset_all():
     st.session_state['reset_count'] += 1
@@ -71,55 +71,28 @@ for i, item in enumerate(st.session_state['items']):
 quick_ph = st.empty()
 
 # ==========================================
-# 📥 精確品名點選區 (改用按鈕清單，絕不跳鍵盤)
+# 📥 精確品名與數量設定區 (上下乾淨排版，直接輸入數量)
 # ==========================================
 st.markdown("<br>", unsafe_allow_html=True)
 st.subheader("📥 精確品名與數量設定")
-st.caption("點擊下方按鈕即可快速將該品項加入已選清單：")
 
-regular_items = [item for item in st.session_state['items'] if item['type'] in ['regular', 'temp']]
-
-# 以 3 個按鈕一排排列品名，點擊直接數量 +1
-cols = st.cols(3) if hasattr(st, "cols") else st.columns(3)
-for i, item in enumerate(regular_items):
-    col = cols[i % 3]
-    with col:
-        if st.button(f"➕ {item['name']}", key=f"btn_add_{item['name']}_{r_id}", use_container_width=True):
-            item['qty'] += 1
-
-if st.button("➕ 新增臨時自訂貨物尺寸", on_click=add_temp_item, use_container_width=True):
-    pass
-
-st.markdown("<br>", unsafe_allow_html=True)
-st.markdown("##### 📋 已點選加入的清單（可直接調整數量或取消）：")
-
-selected_regular_active = [item for item in regular_items if item['qty'] > 0]
-
-if selected_regular_active:
-    for item in selected_regular_active:
-        idx = st.session_state['items'].index(item)
-        c_info, c_qty, c_del = st.columns([5, 3, 2])
-        with c_info:
-            st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b><br><span style='color:#aaa; font-size:0.8em;'>({item['l']}x{item['w']}cm)</span></div>", unsafe_allow_html=True)
-        with c_qty:
-            item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'active_qty_{idx}_v{r_id}', label_visibility="collapsed")
-        with c_del:
-            if st.button("❌ 取消", key=f'del_{idx}_v{r_id}'):
-                item['qty'] = 0
-                item['stacked_qty'] = 0
-                item['skip'] = False
-                st.rerun()
-                
+for i, item in enumerate(st.session_state['items']):
+    if item['type'] != 'quick':
+        # 品名與尺寸放上一行
+        st.markdown(f"<b>{item['name']}</b> <span style='color: #aaa; font-size: 0.85em;'>({item['l']}x{item['w']}cm)</span>", unsafe_allow_html=True)
+        # 數量輸入框放下一行，操作直覺
+        item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{i}_v{r_id}', label_visibility="collapsed")
+        
         if item["type"] == "temp":
-            with st.expander("✏️ 調整此臨時貨物尺寸"):
-                item['name'] = st.text_input("品名", value=item['name'], key=f'edit_name_{idx}_v{r_id}')
+            with st.expander("✏️ 調整此臨時貨物尺寸與名稱"):
+                item['name'] = st.text_input("品名", value=item['name'], key=f'edit_name_{i}_v{r_id}')
                 c1, c2 = st.columns(2)
-                item['l'] = c1.number_input("長(cm)", value=item['l'], min_value=1, step=5, key=f'edit_l_{idx}_v{r_id}')
-                item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f'edit_w_{idx}_v{r_id}')
+                item['l'] = c1.number_input("長(cm)", value=item['l'], min_value=1, step=5, key=f'edit_l_{i}_v{r_id}')
+                item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f'edit_w_{i}_v{r_id}')
                 
         st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
-else:
-    st.info("尚未加入任何精確品名貨物，請點選上方按鈕加入。")
+
+st.button("➕ 新增臨時自訂貨物", on_click=add_temp_item, use_container_width=True)
 
 reg_ph = st.empty()
 
@@ -133,7 +106,7 @@ if st.button("🔄 一鍵清空數量", type="secondary", use_container_width=Tr
 # ==========================================
 st.markdown("---")
 st.subheader("📦 已選貨物裝載設定 (不上車與疊層)")
-st.caption("在此統一管理已選貨物的不上車狀態，或設定疊在上層的件數。")
+st.caption("系統會自動抓取上方數量 > 0 的貨物，在此統一管理不上車狀態或設定疊層。")
 
 active_items = [item for item in st.session_state['items'] if item['qty'] > 0]
 
@@ -159,7 +132,7 @@ if active_items:
             )
         st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px dashed #444;'>", unsafe_allow_html=True)
 else:
-    st.info("請先在上方新增或輸入要載的貨物數量。")
+    st.info("請先在上方輸入要載的貨物數量。")
 
 # ==========================================
 # 算面積並更新上方的進度條 (透過 st.empty)
