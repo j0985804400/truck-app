@@ -76,9 +76,9 @@ st.subheader("📥 精確品名與數量設定")
 for i, item in enumerate(st.session_state['items']):
     if item['type'] != 'quick':
         
-        # --- 終極防折行：直接把品名寫在勾選框裡 (已移除優先星號) ---
+        # --- 改變排版：品名在前，不上車在後 ---
         item['skip'] = st.checkbox(
-            f"🚫不上車 ｜ **{item['name']}** *({item['l']}x{item['w']})*", 
+            f"**{item['name']}** *({item['l']}x{item['w']})* ｜ 🚫不上車", 
             value=item.get('skip', False), 
             key=f'skip_{i}_v{r_id}'
         )
