@@ -13,34 +13,45 @@ def init_state():
         {"name": "📦 快速中箱", "l": 80, "w": 75, "qty": 0, "stacked_qty": 0, "skip": False, "type": "quick"},
         {"name": "📦 快速小箱", "l": 65, "w": 60, "qty": 0, "stacked_qty": 0, "skip": False, "type": "quick"},
         
-        # === 正規貨物清單 ===
-        {"name": "333", "l": 150, "w": 150, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "LAM", "l": 75, "w": 116, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "EX2", "l": 60, "w": 67, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "EP2", "l": 119, "w": 67, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "WET", "l": 62, "w": 78, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "WET長箱", "l": 102, "w": 52, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "ETTN", "l": 65, "w": 95, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "DPS2", "l": 80, "w": 126, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "DPS2小", "l": 53, "w": 104, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "UCU", "l": 61, "w": 106, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "ICP", "l": 82, "w": 82, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "APC", "l": 63, "w": 63, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "IOS大", "l": 122, "w": 80, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "IOS小", "l": 102, "w": 80, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "爐管方型", "l": 70, "w": 70, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "BJM", "l": 66, "w": 125, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "辛巳大", "l": 76, "w": 56, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "辛巳小", "l": 70, "w": 46, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "SDRM", "l": 67, "w": 56, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"},
-        {"name": "CUP", "l": 90, "w": 56, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular"}
+        # === 7大分類正規貨物清單 ===
+        # 1. WET 類
+        {"name": "WET", "l": 62, "w": 78, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "1. WET系列"},
+        {"name": "WET長箱", "l": 102, "w": 52, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "1. WET系列"},
+        
+        # 2. LAM / DPS2 類
+        {"name": "LAM", "l": 75, "w": 116, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "2. LAM與DPS2系列"},
+        {"name": "DPS2", "l": 80, "w": 126, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "2. LAM與DPS2系列"},
+        {"name": "DPS2小", "l": 53, "w": 104, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "2. LAM與DPS2系列"},
+        {"name": "SDRM", "l": 67, "w": 56, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "2. LAM與DPS2系列"},
+        
+        # 3. IOS 類
+        {"name": "IOS大", "l": 122, "w": 80, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "3. IOS系列"},
+        {"name": "IOS小", "l": 102, "w": 80, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "3. IOS系列"},
+        
+        # 4. ETTN / UCU / ICP / APC 類
+        {"name": "ETTN", "l": 65, "w": 95, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "4. ETTN/UCU系列"},
+        {"name": "UCU", "l": 61, "w": 106, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "4. ETTN/UCU系列"},
+        {"name": "ICP", "l": 82, "w": 82, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "4. ETTN/UCU系列"},
+        {"name": "APC", "l": 63, "w": 63, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "4. ETTN/UCU系列"},
+        
+        # 5. 爐管 / BJM / 333 類
+        {"name": "爐管方型", "l": 70, "w": 70, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "5. 爐管與大型設備"},
+        {"name": "BJM", "l": 66, "w": 125, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "5. 爐管與大型設備"},
+        {"name": "333", "l": 150, "w": 150, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "5. 爐管與大型設備"},
+        
+        # 6. 辛巳類
+        {"name": "辛巳大", "l": 76, "w": 56, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "6. 辛巳系列"},
+        {"name": "辛巳小", "l": 70, "w": 46, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "6. 辛巳系列"},
+        
+        # 7. CUP 類
+        {"name": "CUP", "l": 90, "w": 56, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "7. CUP系列"}
     ]
 
 if 'items' not in st.session_state:
     init_state()
 
 def add_temp_item():
-    st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "stacked_qty": 0, "skip": False, "type": "temp"})
+    st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "stacked_qty": 0, "skip": False, "type": "temp", "cat": "8. 臨時自訂"})
 
 def reset_all():
     st.session_state['reset_count'] += 1
@@ -56,7 +67,7 @@ r_id = st.session_state.get('reset_count', 0)
 truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
 
 # ==========================================
-# ⚡ 急件快速估算區 (改用 Pills 按鈕點選)
+# ⚡ 急件快速估算區
 # ==========================================
 st.subheader("⚡ 急件快速估算")
 quick_items = [item for item in st.session_state['items'] if item['type'] == 'quick']
@@ -68,7 +79,6 @@ if selected_quick:
     if target:
         target['qty'] += 1
 
-# 顯示已選的快速箱清單
 quick_active = [item for item in quick_items if item['qty'] > 0]
 if quick_active:
     for item in quick_active:
@@ -89,25 +99,48 @@ if quick_active:
 quick_ph = st.empty()
 
 # ==========================================
-# 📥 精確品名選擇與已選清單區
+# 📥 7大分類精確品名選擇區
 # ==========================================
 st.markdown("<br>", unsafe_allow_html=True)
 st.subheader("📥 精確品名與數量設定")
+st.caption("依分類點選下方品名即可加入：")
 
 regular_items = [item for item in st.session_state['items'] if item['type'] in ['regular', 'temp']]
-regular_names = [item['name'] for item in regular_items]
 
-selected_pill = st.pills("精確品名選擇", options=regular_names, key=f"pills_item_{r_id}", label_visibility="collapsed")
+# 取得所有分類
+categories = sorted(list(set(item['cat'] for item in regular_items)))
 
-if selected_pill:
-    target = next((item for item in regular_items if item['name'] == selected_pill), None)
-    if target:
-        target['qty'] += 1
+# 每個分類賦予不同的標題色系與外框
+cat_colors = {
+    "1. WET系列": "#FF6B6B",      # 紅
+    "2. LAM與DPS2系列": "#4D96FF", # 藍
+    "3. IOS系列": "#6BCB77",      # 綠
+    "4. ETTN/UCU系列": "#FFD93D", # 黃
+    "5. 爐管與大型設備": "#B983FF", # 紫
+    "6. 辛巳系列": "#FF9F45",     # 橙
+    "7. CUP系列": "#00ADB5",      # 青
+    "8. 臨時自訂": "#EEEEEE"      # 灰
+}
+
+for cat in categories:
+    color = cat_colors.get(cat, "#4D96FF")
+    st.markdown(f"<div style='border-left: 5px solid {color}; padding-left: 8px; margin-top: 12px; font-weight: bold; color: {color};'>{cat}</div>", unsafe_allow_html=True)
+    
+    cat_items = [item for item in regular_items if item['cat'] == cat]
+    cat_names = [item['name'] for item in cat_items]
+    
+    selected_cat_pill = st.pills(cat, options=cat_names, key=f"pills_{cat}_{r_id}", label_visibility="collapsed")
+    
+    if selected_cat_pill:
+        target = next((item for item in cat_items if item['name'] == selected_cat_pill), None)
+        if target:
+            target['qty'] += 1
 
 if st.button("➕ 新增臨時自訂貨物", on_click=add_temp_item, use_container_width=True):
     pass
 
 st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("##### 📋 目前已選品名清單：")
 
 selected_regular_active = [item for item in regular_items if item['qty'] > 0]
 
