@@ -61,24 +61,30 @@ truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
 st.subheader("⚡ 急件快速估算 (不挑品名)")
 for i, item in enumerate(st.session_state['items']):
     if item['type'] == 'quick':
-        st.markdown(f"**{item['name']}**")
-        item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{i}_v{r_id}', label_visibility="collapsed")
+        c_name, c_qty = st.columns([6, 4])
+        with c_name:
+            st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b></div>", unsafe_allow_html=True)
+        with c_qty:
+            item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{i}_v{r_id}', label_visibility="collapsed")
         st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
 
 quick_ph = st.empty()
 
 # ==========================================
-# 📥 精確品名與數量設定區 (極簡化：只有品名與數量)
+# 📥 精確品名與數量設定區 (改為精簡左右對應)
 # ==========================================
 st.markdown("<br>", unsafe_allow_html=True)
 st.subheader("📥 精確品名與數量設定")
 for i, item in enumerate(st.session_state['items']):
     if item['type'] != 'quick':
-        st.markdown(f"**{item['name']}** <span style='color: #aaa; font-size: 0.85em;'>({item['l']}x{item['w']})</span>", unsafe_allow_html=True)
-        item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{i}_v{r_id}', label_visibility="collapsed")
+        c_name, c_qty = st.columns([6, 4])
+        with c_name:
+            st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b> <span style='color: #aaa; font-size: 0.8em;'>({item['l']}x{item['w']})</span></div>", unsafe_allow_html=True)
+        with c_qty:
+            item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{i}_v{r_id}', label_visibility="collapsed")
         
         if item["type"] == "temp":
-            with st.expander("✏️ 調整臨時貨物"):
+            with st.expander("✏️ 調整臨時貨物尺寸"):
                 item['name'] = st.text_input("品名", value=item['name'], key=f'edit_name_{i}_v{r_id}')
                 c1, c2 = st.columns(2)
                 item['l'] = c1.number_input("長(cm)", value=item['l'], min_value=1, step=5, key=f'edit_l_{i}_v{r_id}')
