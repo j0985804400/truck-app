@@ -51,7 +51,7 @@ if 'items' not in st.session_state:
     init_state()
 
 def add_temp_item():
-    st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 1, "stacked_qty": 0, "skip": False, "type": "temp", "cat": "8. 臨時自訂"})
+    st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 0, "stacked_qty": 0, "skip": False, "type": "temp", "cat": "8. 臨時自訂"})
 
 def reset_all():
     st.session_state['reset_count'] += 1
@@ -70,103 +70,60 @@ truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
 # ⚡ 急件快速估算區
 # ==========================================
 st.subheader("⚡ 急件快速估算")
-quick_items = [item for item in st.session_state['items'] if item['type'] == 'quick']
-quick_names = [item['name'] for item in quick_items]
-
-selected_quick = st.pills("快速估算選擇", options=quick_names, key=f"pills_quick_{r_id}", label_visibility="collapsed")
-if selected_quick:
-    target = next((item for item in quick_items if item['name'] == selected_quick), None)
-    if target:
-        target['qty'] += 1
-
-quick_active = [item for item in quick_items if item['qty'] > 0]
-if quick_active:
-    for item in quick_active:
-        idx = st.session_state['items'].index(item)
-        c_info, c_qty, c_del = st.columns([5, 3, 2])
-        with c_info:
+for i, item in enumerate(st.session_state['items']):
+    if item['type'] == 'quick':
+        c_name, c_qty = st.columns([6, 4])
+        with c_name:
             st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b></div>", unsafe_allow_html=True)
         with c_qty:
-            item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'quick_qty_{idx}_v{r_id}', label_visibility="collapsed")
-        with c_del:
-            if st.button("❌ 取消", key=f'quick_del_{idx}_v{r_id}'):
-                item['qty'] = 0
-                item['stacked_qty'] = 0
-                item['skip'] = False
-                st.rerun()
+            item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'quick_qty_{i}_v{r_id}', label_visibility="collapsed")
         st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
 
 quick_ph = st.empty()
 
 # ==========================================
-# 📥 7大分類精確品名選擇區
+# 📥 7大分類精確品名與數量設定區
 # ==========================================
 st.markdown("<br>", unsafe_allow_html=True)
 st.subheader("📥 精確品名與數量設定")
-st.caption("依分類點選下方品名即可加入：")
 
 regular_items = [item for item in st.session_state['items'] if item['type'] in ['regular', 'temp']]
-
-# 取得所有分類
 categories = sorted(list(set(item['cat'] for item in regular_items)))
 
-# 每個分類賦予不同的標題色系與外框
 cat_colors = {
-    "1. WET系列": "#FF6B6B",      # 紅
-    "2. LAM與DPS2系列": "#4D96FF", # 藍
-    "3. IOS系列": "#6BCB77",      # 綠
-    "4. ETTN/UCU系列": "#FFD93D", # 黃
-    "5. 爐管與大型設備": "#B983FF", # 紫
-    "6. 辛巳系列": "#FF9F45",     # 橙
-    "7. CUP系列": "#00ADB5",      # 青
-    "8. 臨時自訂": "#EEEEEE"      # 灰
+    "1. WET系列": "#FF6B6B",
+    "2. LAM與DPS2系列": "#4D96FF",
+    "3. IOS系列": "#6BCB77",
+    "4. ETTN/UCU系列": "#FFD93D",
+    "5. 爐管與大型設備": "#B983FF",
+    "6. 辛巳系列": "#FF9F45",
+    "7. CUP系列": "#00ADB5",
+    "8. 臨時自訂": "#EEEEEE"
 }
 
 for cat in categories:
     color = cat_colors.get(cat, "#4D96FF")
-    st.markdown(f"<div style='border-left: 5px solid {color}; padding-left: 8px; margin-top: 12px; font-weight: bold; color: {color};'>{cat}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='border-left: 5px solid {color}; padding-left: 8px; margin-top: 14px; margin-bottom: 6px; font-weight: bold; color: {color};'>{cat}</div>", unsafe_allow_html=True)
     
     cat_items = [item for item in regular_items if item['cat'] == cat]
-    cat_names = [item['name'] for item in cat_items]
-    
-    selected_cat_pill = st.pills(cat, options=cat_names, key=f"pills_{cat}_{r_id}", label_visibility="collapsed")
-    
-    if selected_cat_pill:
-        target = next((item for item in cat_items if item['name'] == selected_cat_pill), None)
-        if target:
-            target['qty'] += 1
-
-if st.button("➕ 新增臨時自訂貨物", on_click=add_temp_item, use_container_width=True):
-    pass
-
-st.markdown("<br>", unsafe_allow_html=True)
-st.markdown("##### 📋 目前已選品名清單：")
-
-selected_regular_active = [item for item in regular_items if item['qty'] > 0]
-
-if selected_regular_active:
-    for item in selected_regular_active:
+    for item in cat_items:
         idx = st.session_state['items'].index(item)
-        c_info, c_qty, c_del = st.columns([5, 3, 2])
-        with c_info:
-            st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b><br><span style='color:#aaa; font-size:0.8em;'>({item['l']}x{item['w']}cm)</span></div>", unsafe_allow_html=True)
+        c_name, c_qty = st.columns([6, 4])
+        with c_name:
+            st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b> <span style='color: #aaa; font-size: 0.8em;'>({item['l']}x{item['w']}cm)</span></div>", unsafe_allow_html=True)
         with c_qty:
-            item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'active_qty_{idx}_v{r_id}', label_visibility="collapsed")
-        with c_del:
-            if st.button("❌ 取消", key=f'del_{idx}_v{r_id}'):
-                item['qty'] = 0
-                item['stacked_qty'] = 0
-                item['skip'] = False
-                st.rerun()
-                
+            item['qty'] = st.number_input("數量", value=item['qty'], min_value=0, step=1, key=f'qty_{idx}_v{r_id}', label_visibility="collapsed")
+            
         if item["type"] == "temp":
-            with st.expander("✏️ 調整此臨時貨物尺寸"):
+            with st.expander("✏️ 調整此臨時貨物尺寸與名稱"):
                 item['name'] = st.text_input("品名", value=item['name'], key=f'edit_name_{idx}_v{r_id}')
                 c1, c2 = st.columns(2)
                 item['l'] = c1.number_input("長(cm)", value=item['l'], min_value=1, step=5, key=f'edit_l_{idx}_v{r_id}')
                 item['w'] = c2.number_input("寬(cm)", value=item['w'], min_value=1, step=5, key=f'edit_w_{idx}_v{r_id}')
                 
         st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
+
+st.button("➕ 新增臨時自訂貨物", on_click=add_temp_item, use_container_width=True)
 
 reg_ph = st.empty()
 
@@ -180,6 +137,7 @@ if st.button("🔄 一鍵清空數量", type="secondary", use_container_width=Tr
 # ==========================================
 st.markdown("---")
 st.subheader("📦 已選貨物裝載設定")
+st.caption("在此統一管理已選貨物的不上車狀態，或設定疊在上層的件數。")
 
 active_items = [item for item in st.session_state['items'] if item['qty'] > 0]
 
@@ -205,7 +163,7 @@ if active_items:
             )
         st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px dashed #444;'>", unsafe_allow_html=True)
 else:
-    st.info("請先在上方新增或點選要載的貨物。")
+    st.info("請先在上方輸入要載的貨物數量。")
 
 # ==========================================
 # 算面積並更新上方的進度條 (透過 st.empty)
