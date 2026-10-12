@@ -42,12 +42,6 @@ def init_state():
         {"name": "CUP", "l": 90, "w": 56, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "7. CUP系列"}
     ]
 
-# 獨立儲存快速估算的專用狀態 (平均尺寸: 74 x 77 cm，已扣除 333)
-if 'quick_qty' not in st.session_state:
-    st.session_state['quick_qty'] = 0
-    st.session_state['quick_stacked'] = 0
-    st.session_state['quick_skip'] = False
-
 if 'items' not in st.session_state:
     init_state()
 
@@ -56,9 +50,6 @@ def add_temp_item():
 
 def reset_all():
     st.session_state['reset_count'] += 1
-    st.session_state['quick_qty'] = 0
-    st.session_state['quick_stacked'] = 0
-    st.session_state['quick_skip'] = False
     for item in st.session_state['items']:
         item['qty'] = 0
         item['stacked_qty'] = 0
@@ -71,17 +62,11 @@ r_id = st.session_state.get('reset_count', 0)
 truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
 
 # ==========================================
-# ⚡ 急件快速估算區 (單一平均尺寸: 74 x 77 cm)
+# ⚡ 滿載預警提醒
 # ==========================================
-st.subheader("⚡ 快速綜合估算")
-c_q_name, c_q_val = st.columns([6, 4])
-with c_q_name:
-    st.markdown("<div style='margin-top: 8px;'><b>📦 一般箱平均估算</b> <span style='color: #aaa; font-size: 0.8em;'>(約 74x77cm)</span></div>", unsafe_allow_html=True)
-with c_q_val:
-    st.session_state['quick_qty'] = st.number_input("數量", value=st.session_state['quick_qty'], min_value=0, step=1, key=f'quick_qty_v{r_id}', label_visibility="collapsed")
-st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px solid #222;'>", unsafe_allow_html=True)
+st.warning("⚠️ **溫馨提醒**：一般箱尺寸平均約 **35 箱** 即達滿載，現場請留意總箱數！")
 
-quick_ph = st.empty()
+reg_ph = st.empty()
 
 # ==========================================
 # 📥 7大分類精確品名與數量設定區
@@ -127,8 +112,6 @@ for cat in categories:
 
 st.button("➕ 新增臨時自訂貨物", on_click=add_temp_item, use_container_width=True)
 
-reg_ph = st.empty()
-
 st.markdown("<br>", unsafe_allow_html=True)
 if st.button("🔄 一鍵清空數量", type="secondary", use_container_width=True):
     reset_all()
@@ -141,82 +124,42 @@ st.markdown("---")
 st.subheader("📦 已選貨物裝載設定")
 st.caption("在此統一管理已選貨物的不上車狀態，或設定疊在上層的件數。")
 
-# 組合包含快速估算與一般貨物的完整列表供下方管理
-all_active_items = []
-if st.session_state['quick_qty'] > 0:
-    all_active_items.append({"name": "📦 一般箱平均估算", "qty": st.session_state['quick_qty'], "stacked_key": "quick_stacked", "skip_key": "quick_skip", "type": "quick_pseudo"})
+active_items = [item for item in st.session_state['items'] if item['qty'] > 0]
 
-for item in st.session_state['items']:
-    if item['qty'] > 0:
-        all_active_items.append(item)
-
-if all_active_items:
-    for i, item in enumerate(all_active_items):
-        if item.get("type") == "quick_pseudo":
-            if st.session_state['quick_stacked'] > st.session_state['quick_qty']:
-                st.session_state['quick_stacked'] = st.session_state['quick_qty']
-                
-            c_name, c_skip, c_stack = st.columns([4, 3, 3])
-            with c_name:
-                st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b><br><span style='color:#aaa; font-size:0.8em;'>({st.session_state['quick_qty']}件)</span></div>", unsafe_allow_html=True)
-            with c_skip:
-                st.session_state['quick_skip'] = st.checkbox("🚫不上車", value=st.session_state['quick_skip'], key=f'skip_quick_{r_id}')
-            with c_stack:
-                st.session_state['quick_stacked'] = st.number_input(
-                    "疊上層數", 
-                    value=st.session_state['quick_stacked'], 
-                    min_value=0, 
-                    max_value=st.session_state['quick_qty'], 
-                    step=1, 
-                    key=f"stack_quick_{r_id}",
-                    label_visibility="collapsed"
-                )
-            st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px dashed #444;'>", unsafe_allow_html=True)
-        else:
-            if item.get('stacked_qty', 0) > item['qty']:
-                item['stacked_qty'] = item['qty']
-                
-            c_name, c_skip, c_stack = st.columns([4, 3, 3])
-            with c_name:
-                st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b><br><span style='color:#aaa; font-size:0.8em;'>({item['qty']}件)</span></div>", unsafe_allow_html=True)
-            with c_skip:
-                item['skip'] = st.checkbox("🚫不上車", value=item.get('skip', False), key=f'skip_ctrl_{item["name"]}_{i}_{r_id}')
-            with c_stack:
-                item['stacked_qty'] = st.number_input(
-                    "疊上層數", 
-                    value=item.get('stacked_qty', 0), 
-                    min_value=0, 
-                    max_value=item['qty'], 
-                    step=1, 
-                    key=f"stack_ctrl_{item['name']}_{i}_{r_id}",
-                    label_visibility="collapsed"
-                )
-            st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px dashed #444;'>", unsafe_allow_html=True)
+if active_items:
+    for i, item in enumerate(active_items):
+        if item.get('stacked_qty', 0) > item['qty']:
+            item['stacked_qty'] = item['qty']
+            
+        c_name, c_skip, c_stack = st.columns([4, 3, 3])
+        with c_name:
+            st.markdown(f"<div style='margin-top: 8px;'><b>{item['name']}</b><br><span style='color:#aaa; font-size:0.8em;'>({item['qty']}件)</span></div>", unsafe_allow_html=True)
+        with c_skip:
+            item['skip'] = st.checkbox("🚫不上車", value=item.get('skip', False), key=f'skip_ctrl_{item["name"]}_{i}_{r_id}')
+        with c_stack:
+            item['stacked_qty'] = st.number_input(
+                "疊上層數", 
+                value=item.get('stacked_qty', 0), 
+                min_value=0, 
+                max_value=item['qty'], 
+                step=1, 
+                key=f"stack_ctrl_{item['name']}_{i}_{r_id}",
+                label_visibility="collapsed"
+            )
+        st.markdown("<hr style='margin: 4px 0px; border: none; border-top: 1px dashed #444;'>", unsafe_allow_html=True)
 else:
     st.info("請先在上方輸入要載的貨物數量。")
 
 # ==========================================
 # 算面積並更新上方的進度條 (透過 st.empty)
 # ==========================================
-quick_area = 0
 regular_area = 0
-
-# 計算快速估算面積 (平均尺寸 74 x 77)
-if st.session_state['quick_qty'] > 0 and not st.session_state['quick_skip']:
-    quick_single = 74 * 77
-    quick_floor_qty = st.session_state['quick_qty'] - st.session_state['quick_stacked']
-    quick_area += quick_single * quick_floor_qty
 
 for item in st.session_state['items']:
     if item['qty'] > 0 and not item.get('skip', False):
         single = item['l'] * item['w']
         floor_qty = item['qty'] - item.get('stacked_qty', 0)
         regular_area += single * floor_qty
-
-quick_pct = (quick_area / truck_area) * 100 if truck_area > 0 else 0
-with quick_ph.container():
-    st.info(f"⚡ **快速估算佔用**：{quick_pct:.1f}%")
-    st.progress(min(quick_pct / 100, 1.0))
 
 regular_pct = (regular_area / truck_area) * 100 if truck_area > 0 else 0
 with reg_ph.container():
@@ -229,7 +172,7 @@ with reg_ph.container():
 st.markdown("---")
 st.subheader("📊 總和裝載狀態與超載建議")
 
-total_item_area = quick_area + regular_area
+total_item_area = regular_area
 total_pct = (total_item_area / truck_area) * 100 if truck_area > 0 else 0
 
 if total_pct > 100:
@@ -239,15 +182,6 @@ if total_pct > 100:
     st.markdown("### 💡 建議留車不上車清單：")
     
     disposable_items = []
-    if st.session_state['quick_qty'] > 0 and not st.session_state['quick_skip']:
-        quick_floor_qty = st.session_state['quick_qty'] - st.session_state['quick_stacked']
-        if quick_floor_qty > 0:
-            disposable_items.append({
-                'name': '📦 一般箱平均估算',
-                'single_area': 74 * 77,
-                'max_qty': quick_floor_qty
-            })
-
     for item in st.session_state['items']:
         if item['qty'] > 0 and not item.get('skip', False):
             floor_qty = item['qty'] - item.get('stacked_qty', 0)
@@ -296,10 +230,6 @@ if total_item_area > 0:
     st.markdown("<br>", unsafe_allow_html=True)
     st.subheader("📋 目前已選貨物總計")
     total_pieces = 0
-    if st.session_state['quick_qty'] > 0 and not st.session_state['quick_skip']:
-        q_stack_mark = f" 📦[疊上層 {st.session_state['quick_stacked']} 件]" if st.session_state['quick_stacked'] > 0 else ""
-        st.write(f"- **📦 一般箱平均估算**：共 {st.session_state['quick_qty']} 件{q_stack_mark}")
-        total_pieces += st.session_state['quick_qty']
 
     for item in st.session_state['items']:
         if item['qty'] > 0 and not item.get('skip', False):
