@@ -8,7 +8,7 @@ def init_state():
         st.session_state['reset_count'] = 0
     
     st.session_state['items'] = [
-        # === 7大分類正規貨物清單 ===
+        # === 正規貨物清單 ===
         # 1. WET 類
         {"name": "WET", "l": 62, "w": 78, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "1. WET系列"},
         {"name": "WET長箱", "l": 102, "w": 52, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "1. WET系列"},
@@ -23,30 +23,34 @@ def init_state():
         {"name": "IOS大", "l": 122, "w": 80, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "3. IOS系列"},
         {"name": "IOS小", "l": 102, "w": 80, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "3. IOS系列"},
         
-        # 4. ETTN / UCU / ICP / APC 類
-        {"name": "ETTN", "l": 65, "w": 95, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "4. ETTN/UCU系列"},
-        {"name": "UCU", "l": 61, "w": 106, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "4. ETTN/UCU系列"},
-        {"name": "ICP", "l": 82, "w": 82, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "4. ETTN/UCU系列"},
-        {"name": "APC", "l": 63, "w": 63, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "4. ETTN/UCU系列"},
+        # 4. EX 與 EP 類 (放在 ETTN 上面)
+        {"name": "EX2", "l": 60, "w": 67, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "4. EX與EP系列"},
+        {"name": "EP2", "l": 119, "w": 67, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "4. EX與EP系列"},
         
-        # 5. 爐管 / BJM / 333 類
-        {"name": "爐管方型", "l": 70, "w": 70, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "5. 爐管與大型設備"},
-        {"name": "BJM", "l": 66, "w": 125, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "5. 爐管與大型設備"},
-        {"name": "333", "l": 150, "w": 150, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "5. 爐管與大型設備"},
+        # 5. ETTN / UCU / ICP / APC 類
+        {"name": "ETTN", "l": 65, "w": 95, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "5. ETTN/UCU系列"},
+        {"name": "UCU", "l": 61, "w": 106, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "5. ETTN/UCU系列"},
+        {"name": "ICP", "l": 82, "w": 82, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "5. ETTN/UCU系列"},
+        {"name": "APC", "l": 63, "w": 63, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "5. ETTN/UCU系列"},
         
-        # 6. 辛巳類
-        {"name": "辛巳大", "l": 76, "w": 56, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "6. 辛巳系列"},
-        {"name": "辛巳小", "l": 70, "w": 46, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "6. 辛巳系列"},
+        # 6. 爐管 / BJM / 333 類
+        {"name": "爐管方型", "l": 70, "w": 70, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "6. 爐管與大型設備"},
+        {"name": "BJM", "l": 66, "w": 125, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "6. 爐管與大型設備"},
+        {"name": "333", "l": 150, "w": 150, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "6. 爐管與大型設備"},
         
-        # 7. CUP 類
-        {"name": "CUP", "l": 90, "w": 56, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "7. CUP系列"}
+        # 7. 辛巳類
+        {"name": "辛巳大", "l": 76, "w": 56, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "7. 辛巳系列"},
+        {"name": "辛巳小", "l": 70, "w": 46, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "7. 辛巳系列"},
+        
+        # 8. CUP 類
+        {"name": "CUP", "l": 90, "w": 56, "qty": 0, "stacked_qty": 0, "skip": False, "type": "regular", "cat": "8. CUP系列"}
     ]
 
 if 'items' not in st.session_state:
     init_state()
 
 def add_temp_item():
-    st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 0, "stacked_qty": 0, "skip": False, "type": "temp", "cat": "8. 臨時自訂"})
+    st.session_state['items'].append({"name": "臨時新增", "l": 50, "w": 50, "qty": 0, "stacked_qty": 0, "skip": False, "type": "temp", "cat": "9. 臨時自訂"})
 
 def reset_all():
     st.session_state['reset_count'] += 1
@@ -64,10 +68,10 @@ truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
 # ==========================================
 # ⚡ 滿載預警提醒
 # ==========================================
-st.warning("⚠️ 提醒：一般箱約 35 箱即滿載！")
+st.warning("⚠️ 提醒：約 35 箱即滿載！")
 
 # ==========================================
-# 📥 7大分類精確品名與數量設定區
+# 📥 8大分類精確品名與數量設定區
 # ==========================================
 st.markdown("<br>", unsafe_allow_html=True)
 st.subheader("📥 精確品名與數量設定")
@@ -79,11 +83,12 @@ cat_colors = {
     "1. WET系列": "#FF6B6B",
     "2. LAM與DPS2系列": "#4D96FF",
     "3. IOS系列": "#6BCB77",
-    "4. ETTN/UCU系列": "#FFD93D",
-    "5. 爐管與大型設備": "#B983FF",
-    "6. 辛巳系列": "#FF9F45",
-    "7. CUP系列": "#00ADB5",
-    "8. 臨時自訂": "#EEEEEE"
+    "4. EX與EP系列": "#FF66B2",
+    "5. ETTN/UCU系列": "#FFD93D",
+    "6. 爐管與大型設備": "#B983FF",
+    "7. 辛巳系列": "#FF9F45",
+    "8. CUP系列": "#00ADB5",
+    "9. 臨時自訂": "#EEEEEE"
 }
 
 for cat in categories:
@@ -116,7 +121,7 @@ if st.button("🔄 一鍵清空數量", type="secondary", use_container_width=Tr
     st.rerun()
 
 # ==========================================
-# 📊 中段：輸入完品項後的即時趴數面板 (佔位符)
+# 📊 中段：輸入完品項後的即時趴數面板
 # ==========================================
 st.markdown("<br>", unsafe_allow_html=True)
 mid_progress_ph = st.empty()
