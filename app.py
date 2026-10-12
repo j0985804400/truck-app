@@ -62,12 +62,9 @@ r_id = st.session_state.get('reset_count', 0)
 truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
 
 # ==========================================
-# ⚡ 滿載預警提醒 & 頂部即時趴數面板
+# ⚡ 滿載預警提醒
 # ==========================================
 st.warning("⚠️ 提醒：一般箱約 35 箱即滿載！")
-
-# 預留給即時計算進度條的空間 (輸入數量後會瞬間回傳到這裡)
-progress_ph = st.empty()
 
 # ==========================================
 # 📥 7大分類精確品名與數量設定區
@@ -119,6 +116,12 @@ if st.button("🔄 一鍵清空數量", type="secondary", use_container_width=Tr
     st.rerun()
 
 # ==========================================
+# 📊 中段：輸入完品項後的即時趴數面板 (佔位符)
+# ==========================================
+st.markdown("<br>", unsafe_allow_html=True)
+mid_progress_ph = st.empty()
+
+# ==========================================
 # 📦 已選貨物裝載設定區 (不上車勾選 + 疊上層數設定)
 # ==========================================
 st.markdown("---")
@@ -152,7 +155,7 @@ else:
     st.info("請先在上方輸入要載的貨物數量。")
 
 # ==========================================
-# 算面積 (將結果直接回傳到頂部的面板)
+# 算面積 (統一在底層計算)
 # ==========================================
 regular_area = 0
 for item in st.session_state['items']:
@@ -163,8 +166,8 @@ for item in st.session_state['items']:
 
 total_pct = (regular_area / truck_area) * 100 if truck_area > 0 else 0
 
-# 將算好的趴數塞回最上面的 progress_ph
-with progress_ph.container():
+# 將算好的趴數塞回中段面板
+with mid_progress_ph.container():
     if total_pct > 100:
         st.error(f"🚨 **目前總佔用：{total_pct:.1f}% (已超載！)**")
     elif total_pct > 85:
@@ -173,15 +176,19 @@ with progress_ph.container():
         st.success(f"🟢 **目前總佔用：{total_pct:.1f}%**")
     else:
         st.info("🟢 **目前佔用：0.0%**")
-        
     st.progress(min(total_pct / 100, 1.0))
 
 # ==========================================
-# 📊 置底超載建議與總計清單
+# 📊 置底：最終裝載狀態與超載建議
 # ==========================================
 st.markdown("---")
+st.subheader("📊 最終裝載狀態與超載建議")
+
 if total_pct > 100:
-    st.subheader("💡 建議留車不上車清單")
+    st.error(f"🚨 **整車已超載！** 最終佔用達 **{total_pct:.1f}%**！")
+    st.progress(1.0)
+    
+    st.markdown("### 💡 建議留車不上車清單：")
     
     disposable_items = []
     for item in st.session_state['items']:
@@ -217,6 +224,15 @@ if total_pct > 100:
             st.error("⚠️ 拿掉上述貨物後，仍處於超載狀態。請自行評估還要剔除哪些貨物！")
         else:
             st.error("⚠️ 查無可建議剔除的貨物，請手動調整數量。")
+
+elif total_pct > 85:
+    st.warning(f"⚠️ **非常極限！** 最終佔用 {total_pct:.1f}% (接近滿載，注意縫隙)")
+    st.progress(min(total_pct / 100, 1.0))
+elif total_pct > 0:
+    st.info(f"🟢 **空間安全**：最終佔用 {total_pct:.1f}%，可順利出車！")
+    st.progress(min(total_pct / 100, 1.0))
+else:
+    st.info("🟢 **尚未使用**：目前佔用 0.0%")
 
 if regular_area > 0:
     st.markdown("<br>", unsafe_allow_html=True)
