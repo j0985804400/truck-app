@@ -62,11 +62,9 @@ r_id = st.session_state.get('reset_count', 0)
 truck_area = st.session_state['truck_l'] * st.session_state['truck_w']
 
 # ==========================================
-# ⚡ 滿載預警提醒
+# ⚡ 滿載預警提醒 (精簡版)
 # ==========================================
-st.warning("⚠️ **溫馨提醒**：一般箱尺寸平均約 **35 箱** 即達滿載，現場請留意總箱數！")
-
-reg_ph = st.empty()
+st.warning("⚠️ 提醒：一般箱約 35 箱即滿載！")
 
 # ==========================================
 # 📥 7大分類精確品名與數量設定區
@@ -151,33 +149,27 @@ else:
     st.info("請先在上方輸入要載的貨物數量。")
 
 # ==========================================
-# 算面積並更新上方的進度條 (透過 st.empty)
+# 算面積 (純計算，不再畫面上方顯示)
 # ==========================================
 regular_area = 0
-
 for item in st.session_state['items']:
     if item['qty'] > 0 and not item.get('skip', False):
         single = item['l'] * item['w']
         floor_qty = item['qty'] - item.get('stacked_qty', 0)
         regular_area += single * floor_qty
 
-regular_pct = (regular_area / truck_area) * 100 if truck_area > 0 else 0
-with reg_ph.container():
-    st.info(f"📍 **精確品名佔用**：{regular_pct:.1f}%")
-    st.progress(min(regular_pct / 100, 1.0))
-
 # ==========================================
-# 📊 總和裝載狀態與超載建議 (置底)
+# 📊 總和裝載狀態與超載建議 (進度條改放這)
 # ==========================================
 st.markdown("---")
-st.subheader("📊 總和裝載狀態與超載建議")
+st.subheader("📊 裝載狀態與超載建議")
 
 total_item_area = regular_area
 total_pct = (total_item_area / truck_area) * 100 if truck_area > 0 else 0
 
 if total_pct > 100:
-    excess_area = total_item_area - truck_area
-    st.error(f"🚨 **整車已超載！** 目前總佔用達 **{total_pct:.1f}%**！")
+    st.error(f"🚨 **整車已超載！** 目前佔用達 **{total_pct:.1f}%**！")
+    st.progress(1.0)
     
     st.markdown("### 💡 建議留車不上車清單：")
     
@@ -196,7 +188,7 @@ if total_pct > 100:
     disposable_items.sort(key=lambda x: -x['single_area'])
     
     found_solution = False
-    temp_excess = excess_area
+    temp_excess = total_item_area - truck_area
     
     for item in disposable_items:
         if item['single_area'] > 0:
@@ -217,14 +209,13 @@ if total_pct > 100:
             st.error("⚠️ 查無可建議剔除的貨物，請手動調整數量。")
 
 elif total_pct > 85:
-    st.warning(f"⚠️ **非常極限！** 總面積佔用 {total_pct:.1f}% (接近滿載，注意縫隙)")
+    st.warning(f"⚠️ **非常極限！** 佔用 {total_pct:.1f}% (接近滿載，注意縫隙)")
+    st.progress(min(total_pct / 100, 1.0))
 elif total_pct > 0:
-    st.info(f"🟢 **空間安全**：總面積佔用 {total_pct:.1f}%，可順利出車！")
+    st.info(f"🟢 **空間安全**：佔用 {total_pct:.1f}%，可順利出車！")
+    st.progress(min(total_pct / 100, 1.0))
 else:
     st.info("🟢 **尚未使用**：目前佔用 0.0%")
-
-if total_pct > 0:
-    st.progress(min(total_pct / 100, 1.0))
 
 if total_item_area > 0:
     st.markdown("<br>", unsafe_allow_html=True)
